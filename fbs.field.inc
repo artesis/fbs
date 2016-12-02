@@ -291,8 +291,8 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
     try {
       $patron = ding_user_get_creds($user);
     }
-    catch (Exception $e) {
-      // No creds, don't return anything.
+    catch (DingProviderAuthException $e) {
+      watchdog_exception('FBS', $e);
       return;
     }
     foreach ($entities as $id => $entity) {
