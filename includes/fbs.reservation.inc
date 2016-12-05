@@ -17,36 +17,43 @@
  *   Reservation info.
  */
 function fbs_reservation_list($account, $requested_type = NULL) {
-  $result = array(
-    DING_RESERVATION_READY => array(),
-    DING_RESERVATION_NOT_READY => array(),
-    DING_RESERVATION_INTERLIBRARY_LOANS => array(),
-  );
+  $res = array();
+  $result = array();
 
-  $res = fbs_service()->Reservations->getReservations(fbs_service()->agencyId, fbs_patron_id($account));
+  $service = fbs_service();
+  if ($service) {
+    try {
+      $res = $service->Reservations->getReservations($service->agencyId, fbs_patron_id($account));
+    }
+    catch (Exception $e) {
+      watchdog_exception('fbs', $e);
+    }
+  }
 
   foreach ($res as $reservation) {
-    $type = $reservation->state == 'readyForPickup' ? DING_RESERVATION_READY : DING_RESERVATION_NOT_READY;
-    $type = $reservation->state == 'interLibraryReservation' ? DING_RESERVATION_INTERLIBRARY_LOANS : $type;
-    $ding_reservation = array(
-      'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
-      'id' => $reservation->reservationId,
-      'pickup_branch_id' => $reservation->pickupBranch,
-      'created' => $reservation->dateOfReservation,
-      'expiry' => $reservation->expiryDate,
-      // Required by ding_reservation.
-      'reservation_type' => $type,
-    );
-
-    if ($type === DING_RESERVATION_READY) {
-      $ding_reservation['pickup_date'] = $reservation->pickupDeadline;
-      $ding_reservation['pickup_order_id'] = $reservation->pickupNumber;
-      $ding_reservation['order_arrived'] = TRUE;
+    if (!empty($reservation->numberInQueue)) {
+      $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, array(
+        'id' => $reservation->reservationId,
+        'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
+        'pickup_branch_id' => $reservation->pickupBranch,
+        'created' => $reservation->dateOfReservation,
+        'expiry' => $reservation->expiryDate,
+        'queue_number' => $reservation->numberInQueue,
+        'ready_for_pickup' => 0,
+      ));
     }
-    elseif ($type === DING_RESERVATION_NOT_READY || $type === DING_RESERVATION_INTERLIBRARY_LOANS) {
-      if (!empty($reservation->numberInQueue)) {
-        $ding_reservation['queue_number'] = $reservation->numberInQueue;
-      }
+    else {
+      $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, array(
+        'id' => $reservation->reservationId,
+        'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
+        'pickup_branch_id' => $reservation->pickupBranch,
+        'pickup_order_id' => $reservation->pickupNumber,
+        'pickup_date' => $reservation->pickupDeadline,
+        'created' => $reservation->dateOfReservation,
+        'expiry' => $reservation->expiryDate,
+        'queue_number' => $reservation->numberInQueue,
+        'ready_for_pickup' => 1,
+      ));
     }
 
     // Add in periodical information if it is one.
@@ -68,8 +75,6 @@ function fbs_reservation_list($account, $requested_type = NULL) {
     if (!empty($reservation->ilBibliographicRecord)) {
       $ding_reservation['display_name'] = $reservation->ilBibliographicRecord->title;
     }
-
-    $result[$type][$ding_reservation['id']] = new DingProviderReservation($ding_reservation['id'], $ding_reservation);
   }
 
   // Filter the result based on the requested type of reservations.
@@ -102,6 +107,7 @@ function fbs_reservation_create($account, $record_id, $options) {
   $batch->reservations = array();
 
   $reservation = new FBS\Model\CreateReservation();
+
   // We use our own custom ids prefixed with "fbs-" for periodicals.
   if (preg_match('/^fbs-/', $record_id)) {
     list($record_id, $periodical) = _fbs_periodical_parse_local_id($record_id);
@@ -117,7 +123,16 @@ function fbs_reservation_create($account, $record_id, $options) {
   $batch->reservations[] = $reservation;
 
   /** @var \FBS\Model\ReservationResponse $response */
-  $response = fbs_service()->Reservations->addReservations(fbs_service()->agencyId, fbs_patron_id($account), $batch);
+  $service = fbs_service();
+  if (!$service) {
+    return FALSE;
+  }
+  try {
+    $response = $service->Reservations->addReservations($service->agencyId, fbs_patron_id($account), $batch);
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
+  }
 
   /** @var \FBS\Model\ReservationResult $result */
   $result = current($response->reservationResults);
@@ -152,8 +167,10 @@ function fbs_reservation_create($account, $record_id, $options) {
       default:
         watchdog('fbs', 'Unexpected state "@state" on failed reservaiton', array('@state' => $result->result), WATCHDOG_WARNING);
         throw new DingProviderUserException('Unknown error from library system while attempting to reserve.');
-    };
+    }
   }
+
+  return FALSE;
 }
 
 /**
@@ -176,7 +193,10 @@ function fbs_reservation_update($account, $reservation_ids, $options) {
     $reservation->pickupBranch = $options['preferred_branch'];
     $batch->reservations[] = $reservation;
   }
-  fbs_service()->Reservations->updateReservations(fbs_service()->agencyId, fbs_patron_id($account), $batch);
+  $service = fbs_service();
+  if ($service) {
+    $service->Reservations->updateReservations($service->agencyId, fbs_patron_id($account), $batch);
+  }
 }
 
 /**
@@ -188,7 +208,10 @@ function fbs_reservation_update($account, $reservation_ids, $options) {
  *   Reservations to delete.
  */
 function fbs_reservation_delete($account, $reservation_id) {
-  fbs_service()->Reservations->deleteReservations(fbs_service()->agencyId, fbs_patron_id($account), $reservation_id);
+  $service = fbs_service();
+  if ($service) {
+    $service->Reservations->deleteReservations($service->agencyId, fbs_patron_id($account), $reservation_id);
+  }
 }
 
 /**
@@ -213,7 +236,12 @@ function fbs_reservation_reservation_deletion_enabled() {
  *   The branch name or null if not found.
  */
 function fbs_reservation_branch_name($branch_id) {
-  $res = fbs_service()->Placement->getBranches(fbs_service()->agencyId);
+  $res = array();
+  $service = fbs_service();
+  if ($service) {
+    $res = $service->Placement->getBranches($service->agencyId);
+  }
+
   foreach ($res as $branch) {
     if ($branch->branchId == $branch_id) {
       return $branch->title;
@@ -251,22 +279,12 @@ function fbs_reservation_default_options($account) {
  * @return array
  *   The reservation options.
  */
-function fbs_reservation_options($account, $default_branch = NULL) {
-  $preferred_branch = NULL;
-
-  if (ding_user_is_provider_user($account)) {
-    $patron_info = fbs_get_patron_info($account);
-
-    $preferred_branch = empty($default_branch) ? $patron_info['preferred_branch'] : $default_branch;
-  }
-
-  if ((!empty($default_branch))) {
-    $preferred_branch = $default_branch;
-  }
+function fbs_reservation_options($type, $account, $default_branch) {
+  $patron_info = fbs_get_patron_info($account);
 
   $form = array();
-  $form += ding_reservation_default_options_branch('fbs_preferred_branch', $preferred_branch, fbs_branches());
-  $form += ding_reservation_interest_period_selector('interest_period', variable_get('fbs_default_interest_period', 180), fbs_interest_periods());
+  $form += ding_reservation_default_options_branch($type, 'preferred_branch', $patron_info['preferred_branch'], fbs_branches());
+  $form += ding_reservation_interest_period_selector($type, 'interest_period', variable_get('fbs_default_interest_period', 180), fbs_interest_periods());
 
   return $form;
 }
@@ -279,8 +297,8 @@ function fbs_reservation_options($account, $default_branch = NULL) {
  * @param array $values
  *   Form values.
  */
-function fbs_reservation_options_submit($account, $values) {
-  fbs_update_preferred_branch($account, $values['fbs_preferred_branch']);
+function fbs_reservation_options_submit($type, $account, $values, $reservation_info) {
+  fbs_update_preferred_branch($account, $reservation_info['fbs_preferred_branch']);
 }
 
 /**
@@ -291,4 +309,16 @@ function fbs_reservation_options_submit($account, $values) {
  */
 function fbs_reservation_default_interest_period() {
   return variable_get('fbs_default_interest_period', 180);
+}
+
+/**
+ * Get list of pickup branches.
+ *
+ * @return array
+ *   FBS pickup branches.
+ */
+function fbs_reservation_pickup_branches() {
+  $branches = fbs_branches();
+
+  return $branches;
 }
