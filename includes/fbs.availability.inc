@@ -178,6 +178,14 @@ function fbs_availability_holdings($provider_ids) {
 
 /**
  * Getting holdings for preprocessing.
+ *
+ * @param array $res
+ *   Item array.
+ * @param bool $is_periodical
+ *   Check for periodicals.
+ *
+ * @return bool|string
+ *   Processed set of data.
  */
 function _fbs_get_holdings($res, $is_periodical = FALSE) {
   if (isset($res)) {
@@ -195,21 +203,28 @@ function _fbs_get_holdings($res, $is_periodical = FALSE) {
 
 /**
  * Set holdings for all kinds of material except periodicals.
+ *
+ * @param array $res
+ *   Item array.
+ *
+ * @return string
+ *   Processed table markup with data.
  */
 function _fbs_set_holdings($res) {
-  $holdings = array();
-  $reservation_count = 0;
-  $reservation_count += (int) $res['reservation_count'];
-  foreach ($res['holdings'] as $holding) {
-    $holdings[] = $holding;
-  }
+  $reservation_count = (int) $res['reservation_count'];
 
-  $result = _fbs_set_table_html($holdings, $reservation_count);
+  $result = _fbs_set_table_html($res['holdings'], $reservation_count);
   return $result;
 }
 
 /**
  * Set holdings if material is periodical only.
+ *
+ * @param array $res
+ *   Item array.
+ *
+ * @return string
+ *   Processed set of data.
  */
 function _fbs_set_holdings_periodical($res) {
   $holdings = array();
@@ -231,6 +246,14 @@ function _fbs_set_holdings_periodical($res) {
 
 /**
  * Make the html-table.
+ *
+ * @param array $h
+ *   Holding row data.
+ * @param int $r_count
+ *   Rows count.
+ *
+ * @return string
+ *   Markup of table.
  */
 function _fbs_set_table_html($h, $r_count) {
   // Set a classname for styling the table.
@@ -256,11 +279,24 @@ function _fbs_set_table_html($h, $r_count) {
   $row['data']['Copies'] = array('data' => $r_count, 'colspan' => 4);
   $variables['rows'][] = $row;
 
-  return theme_table($variables);
+  $holdings_table = array(
+    '#theme' => 'table',
+    '#header' => $variables['header'],
+    '#rows' => $variables['rows'],
+    '#attributes' => $variables['attributes'],
+  );
+
+  return drupal_render($holdings_table);
 }
 
 /**
  * Set rows in table for given holdings.
+ *
+ * @param array $h
+ *   Holding data.
+ *
+ * @return array
+ *   Table body.
  */
 function _fbs_set_rows($h) {
   $rows = array();
@@ -285,6 +321,7 @@ function _fbs_set_rows($h) {
   if (count($rows) >= 1) {
     $rows = _clean_up_rows($rows);
   }
+
   // Adding row - totals.
   $row = array();
   $row['data']['Library'] = t('Total');
@@ -298,6 +335,12 @@ function _fbs_set_rows($h) {
 
 /**
  * If the same placement exists several times collect them in one line.
+ *
+ * @param array $_rows
+ *   Placements data.
+ *
+ * @return array
+ *   Cleaned up rows.
  */
 function _clean_up_rows($_rows) {
   $rows = array();
@@ -317,6 +360,14 @@ function _clean_up_rows($_rows) {
 
 /**
  * Collect materials with the same placement.
+ *
+ * @param array $_rows
+ *   Placement data.
+ * @param string $currkey
+ *   String with placement.
+ *
+ * @return array
+ *   Processed row.
  */
 function _get_placements_with_key($_rows, $currkey) {
   $rows = array();
@@ -330,6 +381,12 @@ function _get_placements_with_key($_rows, $currkey) {
 
 /**
  * Sum material for same placement in one row.
+ *
+ * @param array $placementsarr
+ *   Holdings data.
+ *
+ * @return mixed
+ *   Processed data.
  */
 function _sum_placement($placementsarr) {
   $row = $placementsarr[0];
