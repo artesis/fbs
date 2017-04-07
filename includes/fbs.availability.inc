@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Handles availability information from the library system.
@@ -18,7 +19,10 @@ function fbs_availability_items($provider_ids) {
   $service = fbs_service();
   if ($service) {
     try {
-      $avails = $service->Catalog->getAvailability($service->agencyId, $provider_ids);
+      $avails = $service->Catalog->getAvailability(
+        $service->agencyId,
+        $provider_ids
+      );
     }
     catch (Exception $e) {
       watchdog_exception('fbs', $e);
@@ -27,7 +31,10 @@ function fbs_availability_items($provider_ids) {
 
   $result = array();
   foreach ($avails as $item) {
-    $result[$item->recordId] = array('available' => $item->available, 'reservable' => $item->reservable);
+    $result[$item->recordId] = array(
+      'available' => $item->available,
+      'reservable' => $item->reservable,
+    );
   }
 
   return $result;
@@ -47,7 +54,10 @@ function fbs_availability_holdings($provider_ids) {
   $service = fbs_service();
   if ($service) {
     try {
-      $holdings = $service->Catalog->getHoldings($service->agencyId, $provider_ids);
+      $holdings = $service->Catalog->getHoldings(
+        $service->agencyId,
+        $provider_ids
+      );
     }
     catch (Exception $e) {
       watchdog_exception($e);
@@ -71,7 +81,6 @@ function fbs_availability_holdings($provider_ids) {
       'reserved_count' => 0,
       'is_periodical' => FALSE,
     );
-
 
     $placement_parts = array('branch', 'department', 'location', 'sublocation');
     foreach ($item->holdings as $item_holding) {
@@ -118,7 +127,10 @@ function fbs_availability_holdings($provider_ids) {
               'available' => $material->available ? 1 : 0,
               'total' => 1,
               'placement' => $placement_string,
-              'local_id' => _fbs_periodical_get_local_id($item->recordId, $material->periodical),
+              'local_id' => _fbs_periodical_get_local_id(
+                $item->recordId,
+                $material->periodical
+              ),
             );
           }
         }
@@ -154,8 +166,234 @@ function fbs_availability_holdings($provider_ids) {
       $result[$item->recordId]['issues'] = $issues;
     }
 
+    $result[$item->recordId]['html'] = _fbs_get_holdings(
+      $result[$item->recordId],
+      $result[$item->recordId]['is_periodical']
+    );
   }
 
   return $result;
 
+}
+
+/**
+ * Getting holdings for preprocessing.
+ *
+ * @param array $res
+ *   Item array.
+ * @param bool $is_periodical
+ *   Check for periodicals.
+ *
+ * @return bool|string
+ *   Processed set of data.
+ */
+function _fbs_get_holdings($res, $is_periodical = FALSE) {
+  if (isset($res)) {
+    if ($is_periodical) {
+      return _fbs_set_holdings_periodical($res);
+    }
+    else {
+      return _fbs_set_holdings($res);
+    }
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Set holdings for all kinds of material except periodicals.
+ *
+ * @param array $res
+ *   Item array.
+ *
+ * @return string
+ *   Processed table markup with data.
+ */
+function _fbs_set_holdings($res) {
+  $reservation_count = (int) $res['reservation_count'];
+
+  $result = _fbs_set_table_html($res['holdings'], $reservation_count);
+  return $result;
+}
+
+/**
+ * Set holdings if material is periodical only.
+ *
+ * @param array $res
+ *   Item array.
+ *
+ * @return string
+ *   Processed set of data.
+ */
+function _fbs_set_holdings_periodical($res) {
+  $holdings = array();
+  $reservation_count = 0;
+  foreach ($res as $id => $records) {
+    $reservation_count += (int) $records['reservation_count'];
+    if (isset($records['holdings'])) {
+      foreach ($records['holdings'] as $holding => $issue_year) {
+        foreach ($issue_year as $key) {
+          $holdings[] = $key[0];
+        }
+      }
+    }
+  }
+
+  $result = _fbs_set_table_html($holdings, $reservation_count);
+  return $result;
+}
+
+/**
+ * Make the html-table.
+ *
+ * @param array $h
+ *   Holding row data.
+ * @param int $r_count
+ *   Rows count.
+ *
+ * @return string
+ *   Markup of table.
+ */
+function _fbs_set_table_html($h, $r_count) {
+  // Set a classname for styling the table.
+  $variables['attributes'] = array(
+    'class' => array(
+      drupal_html_class('availability_holdings_table'),
+    ),
+  );
+
+  // Set table header.
+  $variables['header'] = array(
+    'placement' => t('Placement'),
+    'copies' => t('Copies'),
+    'home' => t('At home'),
+  );
+
+  // Set table rows.
+  $variables['rows'] = _fbs_set_rows($h);
+
+  // Set last row with reservation count.
+  $row = array();
+  $row['data']['Library'] = t('Reservations');
+  $row['data']['Copies'] = array('data' => $r_count, 'colspan' => 4);
+  $variables['rows'][] = $row;
+
+  $holdings_table = array(
+    '#theme' => 'table',
+    '#header' => $variables['header'],
+    '#rows' => $variables['rows'],
+    '#attributes' => $variables['attributes'],
+  );
+
+  return drupal_render($holdings_table);
+}
+
+/**
+ * Set rows in table for given holdings.
+ *
+ * @param array $h
+ *   Holding data.
+ *
+ * @return array
+ *   Table body.
+ */
+function _fbs_set_rows($h) {
+  $rows = array();
+
+  $copies_total = 0;
+  $home_total = 0;
+
+  foreach ($h as $key => $data) {
+    $row = array();
+
+    $row['placement'] = implode(' > ', $data['placement']);
+
+    $row['copies'] = isset($data['total_count']) ? (int) $data['total_count'] : 0;
+    $copies_total += $row['copies'];
+
+    $row['home'] = isset($data['available_count']) ? (int) $data['available_count'] : 0;
+    $home_total += $row['home'];
+
+    $rows[] = $row;
+  }
+
+  if (count($rows) >= 1) {
+    $rows = _clean_up_rows($rows);
+  }
+
+  // Adding row - totals.
+  $row = array();
+  $row['data']['Library'] = t('Total');
+  $row['data']['Copies'] = $copies_total;
+  $row['data']['Home'] = $home_total;
+  $row['class'] = array(drupal_html_class('availability_holdings_last_row'));
+  $rows[] = $row;
+
+  return $rows;
+}
+
+/**
+ * If the same placement exists several times collect them in one line.
+ *
+ * @param array $_rows
+ *   Placements data.
+ *
+ * @return array
+ *   Cleaned up rows.
+ */
+function _clean_up_rows($_rows) {
+  $rows = array();
+  $placements = array();
+
+  foreach ($_rows as $row) {
+    $currkey = $row['placement'];
+    if (!in_array($currkey, $placements)) {
+      $placements[] = $currkey;
+      $placementsarr = _get_placements_with_key($_rows, $currkey);
+      $this_row = _sum_placement($placementsarr);
+      $rows[] = $this_row;
+    }
+  }
+  return $rows;
+}
+
+/**
+ * Collect materials with the same placement.
+ *
+ * @param array $_rows
+ *   Placement data.
+ * @param string $currkey
+ *   String with placement.
+ *
+ * @return array
+ *   Processed row.
+ */
+function _get_placements_with_key($_rows, $currkey) {
+  $rows = array();
+  foreach ($_rows as $key) {
+    if ($key['placement'] == $currkey) {
+      $rows[] = $key;
+    }
+  }
+  return $rows;
+}
+
+/**
+ * Sum material for same placement in one row.
+ *
+ * @param array $placementsarr
+ *   Holdings data.
+ *
+ * @return mixed
+ *   Processed data.
+ */
+function _sum_placement($placementsarr) {
+  $row = $placementsarr[0];
+  for ($i = 1; $i < count($placementsarr); $i++) {
+    $next_row = $placementsarr[$i];
+    $row['copies'] += $next_row['copies'];
+    $row['home'] += $next_row['home'];
+  }
+  return $row;
 }
