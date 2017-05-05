@@ -274,8 +274,8 @@ function fbs_profile2_presave($entity) {
     $period->from = $current_on_hold['from'];
     $period->to = $current_on_hold['to'];
 
-    $update = new FBS\Model\UpdatePatronRequest();
-    $patron_settings = new FBS\Model\PatronSettings();
+    $update = new FBS\Model\UpdatePatronRequestV3();
+    $patron_settings = new FBS\Model\PatronSettingsV3();
     foreach ($current as $key => $val) {
       $patron_settings->{$key} = $val;
     }
@@ -403,13 +403,13 @@ function fbs_form_ding_reservation_reservations_form_alter(&$form, &$form_state)
  * Saves all the data we'll need for profile editing into an array that can be
  * serialized in ding_user creds.
  *
- * @param FBS\Model\Patron $patron
+ * @param FBS\Model\PatronV3 $patron
  *   Patron data to save.
  *
  * @return array
  *   Data to save.
  */
-function _fbs_patron_info(FBS\Model\Patron $patron) {
+function _fbs_patron_info(FBS\Model\PatronV3 $patron) {
   $creds = array(
     'patronId' => $patron->patronId,
     'name' => $patron->name,
