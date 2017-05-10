@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: AD
- * Date: 05.05.2017
- * Time: 11:34
- */
 
 namespace FBS\Model;
-
 
 class CreatePatronRequestV3 {
 

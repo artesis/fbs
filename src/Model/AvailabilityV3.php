@@ -2,7 +2,6 @@
 
 namespace FBS\Model;
 
-
 class AvailabilityV3 {
 
   /**
