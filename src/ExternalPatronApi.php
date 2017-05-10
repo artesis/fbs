@@ -204,7 +204,7 @@ class ExternalPatronApi extends SwaggerApi
       $request = $this->newRequest('GET', "/external/{agencyid}/patrons/languages/v1");
       $request->addParameter("path", "agencyid", $agencyId);
 
-      $request->defineResponse(200, "", '\\FBS\\Model\\string');
+      $request->defineResponse(200, "", array('\\FBS\\Model\\Languages'));
       $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
       $request->defineResponse("401", 'client unauthorized', null);
 
