@@ -16,15 +16,15 @@ class ExternalCatalogApi extends SwaggerApi
      *
      * @param string $agencyid ISIL of the agency (e.g. DK-761500)
      * @param array $recordid list of record ids
-     * @return Availability[]
+     * @return AvailabilityV3[]
      */
     public function getAvailability($agencyid, $recordid)
     {
-        $request = $this->newRequest("GET", "/external/v1/{agencyid}/catalog/availability");
+        $request = $this->newRequest("GET", "/external/{agencyid}/catalog/availability/v3");
         $request->addParameter("path", "agencyid", $agencyid);
         $request->addParameter("query", "recordid", $recordid);
 
-        $request->defineResponse(200, "", array('\\FBS\\Model\\Availability'));
+        $request->defineResponse(200, "", array('\\FBS\\Model\\AvailabilityV3'));
         $request->defineResponse("400", 'bad request', null);
         $request->defineResponse("401", 'client unauthorized', null);
 
@@ -35,30 +35,30 @@ class ExternalCatalogApi extends SwaggerApi
      * Retrieves all booking information for each branch of an agency for bookings that ends after the current date.
      *
      *
-     *  
+     *
      *  Returns an array of BookingBranchInfo which contains:
-     *  
+     *
      *  - the branch ID
      *  - gross number of available materials for that branch
      *  - array of BookingInfo for the given bibliographic record, containing the booking Period and the number of
      *  preferred materials
-     *  
-     *  
-     *  
+     *
+     *
+     *
      *  This is to highlight when materials are available for a new potential booking.
-     *  
+     *
      *
      * @param string $agencyid ISIL of the agency (e.g. DK-761500)
      * @param string $recordid identifies the bibliographical record, i.e. the FAUST number
-     * @return BookingBranchInfo[]
+     * @return BookingBranchInfoV3[]
      */
     public function bookingInformation($agencyid, $recordid)
     {
-        $request = $this->newRequest("GET", "/external/v1/{agencyid}/catalog/bookingInformation/{recordid}");
+        $request = $this->newRequest("GET", "/external/{agencyid}/catalog/bookingInformation/{recordid}/v3");
         $request->addParameter("path", "agencyid", $agencyid);
         $request->addParameter("path", "recordid", $recordid);
 
-        $request->defineResponse(200, "", array('\\FBS\\Model\\BookingBranchInfo'));
+        $request->defineResponse(200, "", array('\\FBS\\Model\\BookingBranchInfoV3'));
         $request->defineResponse("400", 'bad request com.dantek.dl.rest.RestException', null);
         $request->defineResponse("401", 'client unauthorized', null);
         $request->defineResponse("404", 'patron not found', null);
@@ -75,15 +75,15 @@ class ExternalCatalogApi extends SwaggerApi
      *
      * @param string $agencyid ISIL of the agency (e.g. DK-761500)
      * @param array $recordid Identifies the bibliographical records - The FAUST number.
-     * @return HoldingsForBibliographicalRecord[]
+     * @return HoldingsForBibliographicalRecordV3[]
      */
     public function getHoldings($agencyid, $recordid)
     {
-        $request = $this->newRequest("GET", "/external/v1/{agencyid}/catalog/holdings");
+        $request = $this->newRequest("GET", "/external/{agencyid}/catalog/holdings/v3");
         $request->addParameter("path", "agencyid", $agencyid);
         $request->addParameter("query", "recordid", $recordid);
 
-        $request->defineResponse(200, "", array('\\FBS\\Model\\HoldingsForBibliographicalRecord'));
+        $request->defineResponse(200, "", array('\\FBS\\Model\\HoldingsForBibliographicalRecordV3'));
         $request->defineResponse("400", 'bad request', null);
         $request->defineResponse("401", 'client unauthorized', null);
 

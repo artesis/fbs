@@ -252,6 +252,7 @@ function fbs_profile2_presave($entity) {
     'receiveSms' => (bool) $wrapper->field_fbs_phone_notification->value(),
     'receiveEmail' => (bool) $wrapper->field_fbs_mail_notification->value(),
     'preferredPickupBranch' => $wrapper->field_fbs_preferred_branch->value(),
+    'preferredLanguage' => $wrapper->field_fbs_preferred_language->value(),
   );
 
   if ($patron['on_hold']) {
@@ -267,6 +268,7 @@ function fbs_profile2_presave($entity) {
     'receiveEmail' => (bool) $patron['mail_notification'],
     'preferredPickupBranch' => $patron['preferred_branch'],
     'onHold' => $patron['on_hold'],
+    'preferredLanguage' => $patron['preferred_language'],
   );
 
   if (array_diff_assoc($current, $existing) || array_diff_assoc($current_on_hold, $existing_on_hold)) {
@@ -274,8 +276,8 @@ function fbs_profile2_presave($entity) {
     $period->from = $current_on_hold['from'];
     $period->to = $current_on_hold['to'];
 
-    $update = new FBS\Model\UpdatePatronRequest();
-    $patron_settings = new FBS\Model\PatronSettings();
+    $update = new FBS\Model\UpdatePatronRequestV3();
+    $patron_settings = new FBS\Model\PatronSettingsV3();
     foreach ($current as $key => $val) {
       $patron_settings->{$key} = $val;
     }
@@ -360,6 +362,39 @@ function fbs_branches() {
 }
 
 /**
+ * Get FBS languages.
+ *
+ * @return array
+ *   Array of languages.
+ */
+function fbs_languages() {
+  $languages = &drupal_static(__FUNCTION__, NULL);
+  if (is_null($languages)) {
+    $service = fbs_service();
+
+    if ($service) {
+      $res = array();
+      $languages = array();
+      try {
+        $a = 1;
+        $res = $service->Patron->getLanguages($service->agencyId);
+      }
+      catch (Exception $e) {
+        watchdog_exception('fbs', $e);
+      }
+
+      $lang_list = language_list();
+
+      foreach ($res as $language) {
+        $languages[$language->language] = $lang_list[$language->language]->native;
+      }
+    }
+  }
+
+  return $languages;
+}
+
+/**
  * Get interest periods.
  *
  * @return array
@@ -403,13 +438,13 @@ function fbs_form_ding_reservation_reservations_form_alter(&$form, &$form_state)
  * Saves all the data we'll need for profile editing into an array that can be
  * serialized in ding_user creds.
  *
- * @param FBS\Model\Patron $patron
+ * @param FBS\Model\PatronV3 $patron
  *   Patron data to save.
  *
  * @return array
  *   Data to save.
  */
-function _fbs_patron_info(FBS\Model\Patron $patron) {
+function _fbs_patron_info(FBS\Model\PatronV3 $patron) {
   $creds = array(
     'patronId' => $patron->patronId,
     'name' => $patron->name,
@@ -418,6 +453,7 @@ function _fbs_patron_info(FBS\Model\Patron $patron) {
     'phone_notification' => $patron->receiveSms,
     'mail_notification' => $patron->receiveEmail,
     'preferred_branch' => $patron->preferredPickupBranch,
+    'preferred_language' => $patron->preferredLanguage,
     'on_hold' => NULL,
     'address' => NULL,
   );
