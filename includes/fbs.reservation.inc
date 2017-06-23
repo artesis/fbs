@@ -31,30 +31,26 @@ function fbs_reservation_list($account, $requested_type = NULL) {
   }
 
   foreach ($res as $reservation) {
+    $properties = array(
+      'id' => $reservation->reservationId,
+      'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
+      'pickup_branch_id' => $reservation->pickupBranch,
+      'created' => $reservation->dateOfReservation,
+      'expiry' => $reservation->expiryDate,
+      'queue_number' => $reservation->numberInQueue,
+    );
+
     if (!empty($reservation->numberInQueue)) {
-      $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, array(
-        'id' => $reservation->reservationId,
-        'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
-        'pickup_branch_id' => $reservation->pickupBranch,
-        'created' => $reservation->dateOfReservation,
-        'expiry' => $reservation->expiryDate,
-        'queue_number' => $reservation->numberInQueue,
-        'ready_for_pickup' => 0,
-      ));
+      $properties['ready_for_pickup'] = 0;
     }
     else {
-      $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, array(
-        'id' => $reservation->reservationId,
-        'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
-        'pickup_branch_id' => $reservation->pickupBranch,
+      $properties += array(
         'pickup_order_id' => $reservation->pickupNumber,
         'pickup_date' => $reservation->pickupDeadline,
-        'created' => $reservation->dateOfReservation,
-        'expiry' => $reservation->expiryDate,
-        'queue_number' => $reservation->numberInQueue,
         'ready_for_pickup' => 1,
-      ));
+      );
     }
+    $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, $properties);
 
     // Add in periodical information if it is one.
     if ($reservation->periodical) {
@@ -69,12 +65,18 @@ function fbs_reservation_list($account, $requested_type = NULL) {
       else {
         $ding_reservation['notes'] = t('Issue @vol', array('@vol' => $vol));
       }
+
+      $properties += $ding_reservation;
     }
 
     // Handle inter library loans.
     if (!empty($reservation->ilBibliographicRecord)) {
-      $ding_reservation['display_name'] = $reservation->ilBibliographicRecord->title;
+      $ding_reservation['title'] = $reservation->ilBibliographicRecord->title;
+
+      $properties += $ding_reservation;
     }
+
+    $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, $properties);
   }
 
   // Filter the result based on the requested type of reservations.
@@ -321,4 +323,32 @@ function fbs_reservation_pickup_branches() {
   $branches = fbs_branches();
 
   return $branches;
+}
+
+/**
+ * Replace entity for the reservation in the case object in not in Ting anymore.
+ *
+ * @param $item
+ *   Provider reservation object.
+ *
+ * @return \TingEntity
+ *   Ting entity object, filled with data from provider service.
+ */
+function fbs_replace_entity($item) {
+  $faust_number = explode(':', $item->ding_entity_id);
+  $faust_number = $faust_number[1];
+
+  // Build entity based on available information.
+  $entity = new TingEntity();
+  $entity->setLocalId($faust_number);
+  $entity->setDingEntityId($item->ding_entity_id);
+  $entity->setTitle($item->__get('title'));
+
+  $entity->id = $item->ding_entity_id;
+  $entity->ting_cover = array(LANGUAGE_NONE => array(array('id' => $item->ding_entity_id)));
+  $entity->ting_title = array(LANGUAGE_NONE => array(array('id' => $item->ding_entity_id)));
+  $entity->ding_entity_type = 'ding_entity';
+  $entity->provider_id = $faust_number;
+
+  return $entity;
 }
