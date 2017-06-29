@@ -77,10 +77,8 @@ function fbs_availability_holdings($provider_ids) {
       'total_count' => 0,
       // We don't know about this one.
       'is_internet' => FALSE,
-      // And FBS can't tell us this.
-      'reserved_count' => 0,
       'is_periodical' => FALSE,
-      'reservation_count' => $item->reservations
+      'reservation_count' => $item->reservations,
     );
 
     $placement_parts = array('branch', 'department', 'location', 'sublocation');
