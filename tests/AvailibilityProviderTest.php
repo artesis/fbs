@@ -228,7 +228,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
    *       reference_count: # int, optional
    *   is_internet: # bool, optional
    *   total_count: # int
-   *   reserved_count: # int
+   *   reservation_count: # int
    */
   public function testHoldings() {
     $this->provider = 'availability';
@@ -590,7 +590,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         'holdings' => array(),
         'is_internet' => FALSE,
         'total_count' => 0,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -607,7 +607,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 0,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -636,7 +636,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 2,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -677,7 +677,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 10,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -706,7 +706,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 1,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -723,7 +723,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         'holdings' => array(),
         'is_internet' => FALSE,
         'total_count' => 0,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
       // MAT2
@@ -746,7 +746,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 2,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -775,7 +775,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 1,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
        // MAT iDontExist
@@ -785,7 +785,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         'holdings' => array(),
         'is_internet' => FALSE,
         'total_count' => 0,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
     );
@@ -1090,7 +1090,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         ),
         'is_internet' => FALSE,
         'total_count' => 10,
-        'reserved_count' => 0,
+        'reservation_count' => 0,
         'is_periodical' => TRUE,
       ),
     );
