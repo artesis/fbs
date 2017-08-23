@@ -588,3 +588,13 @@ function fbs_form_alter(&$form, &$form_state, $form_id) {
     }
   }
 }
+
+/**
+ * Implements hook_user_account_update().
+ *
+ * This is needed for the ding_user_user_presave().
+ * This function needs to be empty because all the update functionality is
+ * implemented by the fbs_user_update_pincode().
+ */
+function fbs_user_account_update($account, $changes) {
+}
