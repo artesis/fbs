@@ -21,10 +21,11 @@ function fbs_wayf_login_credentials($authentication_attributes) {
     );
   }
 
-  $cpr = _fbs_wayf_login($authentication_attributes['eduPersonPrincipalName'], $cpr);
+  $pass = user_password(16);
+  _fbs_wayf_login($authentication_attributes['eduPersonPrincipalName'], $pass);
   $credentials = array(
-    'name' => $authentication_attributes['eduPersonPrincipalName'],
-    'pass' => $cpr,
+    'name' => $cpr,
+    'pass' => $pass,
   );
 
   return $credentials;
