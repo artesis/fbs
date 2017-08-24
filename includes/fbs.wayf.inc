@@ -19,16 +19,19 @@ function fbs_wayf_login_credentials($authentication_attributes) {
       $authentication_attributes['organizationName'],
       $authentication_attributes['eduPersonPrincipalName']
     );
+
+    $pass = user_password(16);
+    _fbs_wayf_login($authentication_attributes['eduPersonPrincipalName'], $pass);
+
+    $credentials = array(
+      'name' => $cpr,
+      'pass' => $pass,
+    );
+
+    return $credentials;
   }
 
-  $pass = user_password(16);
-  _fbs_wayf_login($authentication_attributes['eduPersonPrincipalName'], $pass);
-  $credentials = array(
-    'name' => $cpr,
-    'pass' => $pass,
-  );
-
-  return $credentials;
+  return [];
 }
 
 /**
