@@ -572,25 +572,6 @@ function _fbs_wayf_login($name, $value = NULL) {
 }
 
 /**
- * Implements hook_form_alter().
- */
-function fbs_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'ding_reservation_reservations_ready_form') {
-    $able_to_delete = variable_get('fbs_enable_reservation_deletion', FALSE);
-    $status = $form_state['build_info']['args'][1];
-    if (!$able_to_delete || $status == 'ready_for_pickup') {
-      $form['reservations']['#js_select'] = FALSE;
-
-      foreach ($form['reservations']['#options'] as $key => $option) {
-        $form['reservations']['#options'][$key]['#disabled'] = TRUE;
-      }
-
-      unset($form['actions']);
-    }
-  }
-}
-
-/**
  * Implements hook_user_account_update().
  *
  * This is needed for the ding_user_user_presave().
