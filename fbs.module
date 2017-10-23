@@ -577,7 +577,8 @@ function _fbs_wayf_login($name, $value = NULL) {
 function fbs_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'ding_reservation_reservations_ready_form') {
     $able_to_delete = variable_get('fbs_enable_reservation_deletion', FALSE);
-    if (!$able_to_delete) {
+    $status = $form_state['build_info']['args'][1];
+    if (!$able_to_delete || $status == 'ready_for_pickup') {
       $form['reservations']['#js_select'] = FALSE;
 
       foreach ($form['reservations']['#options'] as $key => $option) {
