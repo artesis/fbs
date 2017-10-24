@@ -570,3 +570,23 @@ function _fbs_wayf_login($name, $value = NULL) {
 
   return NULL;
 }
+
+/**
+ * Implements hook_user_account_update().
+ *
+ * This is needed for the ding_user_user_presave().
+ * This function needs to be empty because all the update functionality is
+ * implemented by the fbs_user_update_pincode().
+ */
+function fbs_user_account_update($account, $changes) {
+}
+
+/**
+ * Initializing provider user profile.
+ *
+ * Clearing cache_field on provider user initialisation, in order to fill
+ * profile with data.
+ */
+function fbs_user_profile_init() {
+  cache_clear_all('*', 'cache_field', TRUE);
+}
