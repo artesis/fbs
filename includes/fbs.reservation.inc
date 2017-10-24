@@ -29,11 +29,16 @@ function fbs_reservation_list($account, $requested_type = NULL) {
       watchdog_exception('fbs', $e);
     }
   }
+  $ids = array();
+  foreach ($res as $reservation) {
+    $ids[$reservation->reservationId] = $reservation->recordId;
+  }
+  $ids = ding_provider_build_entity_id($ids);
 
   foreach ($res as $reservation) {
     $properties = array(
       'id' => $reservation->reservationId,
-      'ding_entity_id' => ding_provider_build_entity_id($reservation->recordId),
+      'ding_entity_id' => $ids[$reservation->recordId],
       'pickup_branch_id' => $reservation->pickupBranch,
       'created' => $reservation->dateOfReservation,
       'expiry' => $reservation->expiryDate,
