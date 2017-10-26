@@ -206,6 +206,13 @@ function fbs_settings_form() {
     '#description' => t('Allow users to delete their reservations as well as ready for pickup ones.'),
   );
 
+  $form['fbs']['fbs_allow_profile_edit'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable profile edit'),
+    '#description' => t('Allow users to edit their own Email, Branch and Phone fields.'),
+    '#default_value' => variable_get('fbs_allow_profile_edit', FALSE),
+  );
+
   return system_settings_form($form);
 }
 
@@ -589,4 +596,16 @@ function fbs_user_account_update($account, $changes) {
  */
 function fbs_user_profile_init() {
   cache_clear_all('*', 'cache_field', TRUE);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fbs_form_profile2_edit_provider_fbs_form_alter(&$form, &$form_state, $form_id) {
+  $allow_profile_edit = variable_get('fbs_allow_profile_edit', FALSE);
+  $form['profile_provider_fbs']['field_fbs_mail']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_mail_notification']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_preferred_branch']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_phone']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_phone_notification']['#disabled'] = !$allow_profile_edit;
 }
