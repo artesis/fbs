@@ -317,6 +317,10 @@ function _fbs_set_rows($h) {
     $rows[] = $row;
   }
 
+  // Sort library departments.
+  $sort_order = variable_get('fbs_sort_departments', SORT_ASC);
+  $rows = array_sort($rows, 'placement', $sort_order);
+
   if (count($rows) >= 1) {
     $rows = _clean_up_rows($rows);
   }
@@ -375,6 +379,7 @@ function _get_placements_with_key($_rows, $currkey) {
       $rows[] = $key;
     }
   }
+
   return $rows;
 }
 
@@ -395,4 +400,49 @@ function _sum_placement($placementsarr) {
     $row['home'] += $next_row['home'];
   }
   return $row;
+}
+
+/**
+ * Helper function for sorting nested arrays.
+ *
+ * @param array $array
+ * @param string $on
+ * @param int $order
+ *
+ * @return array
+ */
+function array_sort($array, $on, $order = SORT_ASC) {
+  $new_array = array();
+  $sortable_array = array();
+
+  if (count($array) > 0) {
+    foreach ($array as $k => $v) {
+      if (is_array($v)) {
+        foreach ($v as $k2 => $v2) {
+          if ($k2 == $on) {
+            $sortable_array[$k] = $v2;
+          }
+        }
+      }
+      else {
+        $sortable_array[$k] = $v;
+      }
+    }
+
+    switch ($order) {
+      case SORT_ASC:
+        asort($sortable_array);
+        break;
+
+      case SORT_DESC:
+        arsort($sortable_array);
+        break;
+    }
+
+    foreach ($sortable_array as $k => $v) {
+      $new_array[$k] = $array[$k];
+    }
+  }
+
+  return $new_array;
 }
