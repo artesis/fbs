@@ -18,15 +18,22 @@ function fbs_debt_list($account) {
   $result = array();
   $res = array();
 
-  $service = fbs_service();
-  if ($service) {
-    try {
-      $res = $service->Payment->getFees($service->agencyId, fbs_patron_id($account), FALSE, FALSE);
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
+  try {
+    $res = fbs_service()->Payment->getFees(fbs_service()->agencyId, fbs_patron_id($account), FALSE, FALSE);
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
+  }
+
+  $ids = array();
+  foreach ($res as $fee) {
+    // The entity is only fetched in this case.
+    if (!empty($fee->materials) && count($fee->materials) == 1) {
+      $material = reset($fee->materials);
+      $ids[$material->recordId] = $material->recordId;
     }
   }
+  $ids = ding_provider_build_entity_id($ids);
 
   foreach ($res as $fee) {
     $id = $fee->feeId;
@@ -52,9 +59,10 @@ function fbs_debt_list($account) {
         $record_ids[] = $material->recordId;
       }
 
-      // If there's only one material, use its title as display_name;
+      // If there's only one material, use its title as display_name.
       if (count($record_ids) == 1) {
-        $entity = ding_entity_load(ding_provider_build_entity_id(reset($record_ids)));
+        $record_id = reset($record_ids);
+        $entity = ding_entity_load($ids[$record_id]);
         $data['display_name'] = $entity->getTitle();
       }
       elseif (count($record_ids) > 1) {
@@ -87,18 +95,17 @@ function fbs_debt_payment_received($account, $debt_ids = array(), $order_id = NU
   $payment_order = new FBS\Model\PaymentOrder();
   $payment_order->orderId = $order_id;
   $payment_order->feeIds = array();
+
   foreach ($debt_ids as $debt_id) {
     $payment_order->feeIds[] = $debt_id;
   }
+
   $res = array();
-  $service = fbs_service();
-  if ($service) {
-    try {
-      $res = $service->Payment->payFees($service->agencyId, fbs_patron_id($account), $payment_order);
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
-    }
+  try {
+    $res = fbs_service()->Payment->payFees(fbs_service()->agencyId, fbs_patron_id($account), $payment_order);
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
   }
 
   foreach ($res as $confirmation) {

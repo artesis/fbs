@@ -206,6 +206,24 @@ function fbs_settings_form() {
     '#description' => t('Allow users to delete their reservations as well as ready for pickup ones.'),
   );
 
+  $form['fbs']['fbs_allow_profile_edit'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable profile edit'),
+    '#description' => t('Allow users to edit their own Email, Branch and Phone fields.'),
+    '#default_value' => variable_get('fbs_allow_profile_edit', FALSE),
+  );
+
+  $form['fbs']['fbs_sort_departments'] = array(
+    '#type' => 'select',
+    '#title' => t('Sort departments alphabetically'),
+    '#description' => t('Allow to sort the information on departments of the library in alphabetical order. Default is "Ascending".'),
+    '#options' => array(
+      SORT_ASC => t('Ascending'),
+      SORT_DESC => t('Descending'),
+    ),
+    '#default_value' => variable_get('fbs_sort_departments', SORT_ASC),
+  );
+
   return system_settings_form($form);
 }
 
@@ -572,24 +590,6 @@ function _fbs_wayf_login($name, $value = NULL) {
 }
 
 /**
- * Implements hook_form_alter().
- */
-function fbs_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'ding_reservation_reservations_ready_form') {
-    $able_to_delete = variable_get('fbs_enable_reservation_deletion', FALSE);
-    if (!$able_to_delete) {
-      $form['reservations']['#js_select'] = FALSE;
-
-      foreach ($form['reservations']['#options'] as $key => $option) {
-        $form['reservations']['#options'][$key]['#disabled'] = TRUE;
-      }
-
-      unset($form['actions']);
-    }
-  }
-}
-
-/**
  * Implements hook_user_account_update().
  *
  * This is needed for the ding_user_user_presave().
@@ -597,4 +597,26 @@ function fbs_form_alter(&$form, &$form_state, $form_id) {
  * implemented by the fbs_user_update_pincode().
  */
 function fbs_user_account_update($account, $changes) {
+}
+
+/**
+ * Initializing provider user profile.
+ *
+ * Clearing cache_field on provider user initialisation, in order to fill
+ * profile with data.
+ */
+function fbs_user_profile_init() {
+  cache_clear_all('*', 'cache_field', TRUE);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function fbs_form_profile2_edit_provider_fbs_form_alter(&$form, &$form_state, $form_id) {
+  $allow_profile_edit = variable_get('fbs_allow_profile_edit', FALSE);
+  $form['profile_provider_fbs']['field_fbs_mail']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_mail_notification']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_preferred_branch']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_phone']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_phone_notification']['#disabled'] = !$allow_profile_edit;
 }
