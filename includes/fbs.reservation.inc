@@ -31,14 +31,13 @@ function fbs_reservation_list($account, $requested_type = NULL) {
   }
   $ids = array();
   foreach ($res as $reservation) {
-    $ids[$reservation->reservationId] = $reservation->recordId;
+    $ids[$reservation->reservationId] = ding_provider_build_entity_id($reservation->recordId);
   }
-  $ids = ding_provider_build_entity_id($ids);
 
   foreach ($res as $reservation) {
     $properties = array(
       'id' => $reservation->reservationId,
-      'ding_entity_id' => $ids[$reservation->recordId],
+      'ding_entity_id' => $ids[$reservation->reservationId],
       'pickup_branch_id' => $reservation->pickupBranch,
       'created' => $reservation->dateOfReservation,
       'expiry' => $reservation->expiryDate,
@@ -55,7 +54,6 @@ function fbs_reservation_list($account, $requested_type = NULL) {
         'ready_for_pickup' => 1,
       );
     }
-    $result[$reservation->reservationId] = new DingProviderReservation($reservation->reservationId, $properties);
 
     // Add in periodical information if it is one.
     if ($reservation->periodical) {
