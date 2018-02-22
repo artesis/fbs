@@ -15,7 +15,7 @@
  *   Set of user reservations.
  */
 function fbs_reservation_raw_list(stdClass $account) {
-  $fbs_reservations_result = &drupal_static(__FUNCTION__, array());
+  $fbs_reservations_result = &drupal_static(__FUNCTION__ . $account->uid, array());
 
   $service = fbs_service();
   if ($service && empty($fbs_reservations_result)) {

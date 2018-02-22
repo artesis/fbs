@@ -15,7 +15,7 @@
  *   Set of user loans.
  */
 function fbs_loan_raw_list(stdClass $account) {
-  $fbs_loans_result = &drupal_static(__FUNCTION__.$account->uid, array());
+  $fbs_loans_result = &drupal_static(__FUNCTION__ . $account->uid, array());
 
   $service = fbs_service();
   if ($service && empty($fbs_loans_result)) {

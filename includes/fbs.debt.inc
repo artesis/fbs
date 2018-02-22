@@ -15,7 +15,7 @@
  *   Set of user debts.
  */
 function fbs_debt_raw_list(stdClass $account) {
-  $fbs_debts_result = &drupal_static(__FUNCTION__, array());
+  $fbs_debts_result = &drupal_static(__FUNCTION__ . $account->uid, array());
 
   $service = fbs_service();
   if ($service && empty($fbs_debts_result)) {
