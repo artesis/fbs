@@ -6,6 +6,31 @@
  */
 
 /**
+ * Fetches user reservations.
+ *
+ * @param $account
+ *   User object whose reserations are fetched.
+ *
+ * @return array
+ *   Set of user reservations.
+ */
+function fbs_reservation_raw_list(stdClass $account) {
+  $fbs_reservations_result = &drupal_static(__FUNCTION__ . $account->uid, array());
+
+  $service = fbs_service();
+  if ($service && empty($fbs_reservations_result)) {
+    try {
+      $fbs_reservations_result = $service->Reservations->getReservations($service->agencyId, fbs_patron_id($account));
+    }
+    catch (Exception $e) {
+      watchdog_exception('fbs', $e);
+    }
+  }
+
+  return $fbs_reservations_result;
+}
+
+/**
  * Implements provider reservation, list.
  *
  * @param object $account
@@ -17,27 +42,20 @@
  *   Reservation info.
  */
 function fbs_reservation_list($account, $requested_type = NULL) {
-  $res = array();
   $result = array();
+  $fbs_reservations_result = fbs_reservation_raw_list($account);
 
-  $service = fbs_service();
-  if ($service) {
-    try {
-      $res = $service->Reservations->getReservations($service->agencyId, fbs_patron_id($account));
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
-    }
+  // Lookup v3 loan id's.
+  $reservation_ids = array();
+  foreach ($fbs_reservations_result as $reservation) {
+    $reservation_ids[] = $reservation->recordId;
   }
-  $ids = array();
-  foreach ($res as $reservation) {
-    $ids[$reservation->reservationId] = ding_provider_build_entity_id($reservation->recordId);
-  }
+  $reservation_ids = ding_provider_lookup_entity_id($reservation_ids);
 
-  foreach ($res as $reservation) {
+  foreach ($fbs_reservations_result as $reservation) {
     $properties = array(
       'id' => $reservation->reservationId,
-      'ding_entity_id' => $ids[$reservation->reservationId],
+      'ding_entity_id' => $reservation_ids[$reservation->recordId],
       'pickup_branch_id' => $reservation->pickupBranch,
       'created' => $reservation->dateOfReservation,
       'expiry' => $reservation->expiryDate,
