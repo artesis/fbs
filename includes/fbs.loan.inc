@@ -6,6 +6,31 @@
  */
 
 /**
+ * Fetches user loans.
+ *
+ * @param $account
+ *   User object whose loans are fetched.
+ *
+ * @return array
+ *   Set of user loans.
+ */
+function fbs_loan_raw_list(stdClass $account) {
+  $fbs_loans_result = &drupal_static(__FUNCTION__ . $account->uid, array());
+
+  $service = fbs_service();
+  if ($service && empty($fbs_loans_result)) {
+    try {
+      $fbs_loans_result = $service->MaterialLoans->getLoans($service->agencyId, fbs_patron_id($account));
+    }
+    catch (Exception $e) {
+      watchdog_exception('fbs', $e);
+    }
+  }
+
+  return $fbs_loans_result;
+}
+
+/**
  * Implements provider loan, list.
  *
  * @param object $account
@@ -16,23 +41,18 @@
  */
 function fbs_loan_list($account) {
   $result = array();
-  $res = array();
+  $fbs_loans_result = fbs_loan_raw_list($account);
 
-  $service = fbs_service();
-  if ($service) {
-    try {
-      $res = $service->MaterialLoans->getLoans($service->agencyId, fbs_patron_id($account));
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
-    }
+  // Lookup v3 loan id's.
+  $loan_ids = array();
+  foreach ($fbs_loans_result as $loan) {
+    $loan_ids[] = $loan->loanDetails->recordId;
   }
+  $loan_ids = ding_provider_lookup_entity_id($loan_ids);
 
-  foreach ($res as $loan) {
-    $id = $loan->loanDetails->loanId;
-
+  foreach ($fbs_loans_result as $loan) {
     $loan_data = array(
-      'ding_entity_id' => ding_provider_build_entity_id($loan->loanDetails->recordId),
+      'ding_entity_id' => $loan_ids[$loan->loanDetails->recordId],
       'loan_date' => $loan->loanDetails->loanDate,
       'expiry' => $loan->loanDetails->dueDate,
       'renewable' => $loan->isRenewable,
@@ -59,6 +79,7 @@ function fbs_loan_list($account) {
       $loan_data['display_name'] = $loan->loanDetails->ilBibliographicRecord->title;
     }
 
+    $id = $loan->loanDetails->loanId;
     $result[$id] = new DingProviderLoan($id, $loan_data);
   }
 
