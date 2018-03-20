@@ -163,6 +163,8 @@ function fbs_availability_holdings($provider_ids) {
         );
       }
       $result[$item->recordId]['issues'] = $issues;
+      // Reset issues so they do not get into wrong item.
+      $tmp_issues = [];
     }
 
     $result[$item->recordId]['html'] = _fbs_get_holdings(
