@@ -220,31 +220,5 @@ function fbs_field_default_field_bases() {
     'type' => 'fbs_preferred_branch',
   );
 
-  // Exported field_base: 'field_fbs_preferred_language'
-  $field_bases['field_fbs_preferred_language'] = array(
-    'active' => 1,
-    'cardinality' => 1,
-    'deleted' => 0,
-    'entity_types' => array(
-      0 => 'profile2',
-    ),
-    'field_name' => 'field_fbs_preferred_language',
-    'foreign keys' => array(),
-    'indexes' => array(),
-    'locked' => 0,
-    'module' => 'fbs',
-    'settings' => array(
-      'profile2_private' => 0,
-    ),
-    'storage' => array(
-      'active' => 1,
-      'module' => 'virtual_field',
-      'settings' => array(),
-      'type' => 'virtual_field',
-    ),
-    'translatable' => 0,
-    'type' => 'fbs_preferred_language',
-  );
-
   return $field_bases;
 }

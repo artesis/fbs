@@ -50,10 +50,9 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'fbs_default',
-        'weight' => 3,
+        'type' => 'hidden',
+        'weight' => 6,
       ),
     ),
     'entity_type' => 'profile2',
@@ -84,10 +83,9 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'fbs_notification',
-        'weight' => 4,
+        'type' => 'hidden',
+        'weight' => 5,
       ),
     ),
     'entity_type' => 'profile2',
@@ -148,10 +146,9 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'fbs_period_default',
-        'weight' => 8,
+        'type' => 'hidden',
+        'weight' => 3,
       ),
     ),
     'entity_type' => 'profile2',
@@ -179,10 +176,9 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'fbs_default',
-        'weight' => 2,
+        'type' => 'hidden',
+        'weight' => 7,
       ),
     ),
     'entity_type' => 'profile2',
@@ -213,10 +209,9 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'fbs_notification',
-        'weight' => 5,
+        'type' => 'hidden',
+        'weight' => 4,
       ),
     ),
     'entity_type' => 'profile2',
@@ -246,46 +241,14 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
-        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'fbs_preferred_branch',
-        'weight' => 7,
+        'type' => 'hidden',
+        'weight' => 2,
       ),
     ),
     'entity_type' => 'profile2',
     'field_name' => 'field_fbs_preferred_branch',
     'label' => 'Preferred branch',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'fbs',
-      'settings' => array(),
-      'type' => 'fbs_options_select',
-      'weight' => 7,
-    ),
-  );
-
-  // Exported field_instance: 'profile2-provider_fbs-field_fbs_preferred_language'
-  $field_instances['profile2-provider_fbs-field_fbs_preferred_language'] = array(
-    'bundle' => 'provider_fbs',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'fbs',
-        'settings' => array(),
-        'type' => 'fbs_preferred_language',
-        'weight' => 7,
-      ),
-    ),
-    'entity_type' => 'profile2',
-    'field_name' => 'field_fbs_preferred_language',
-    'label' => 'Preferred language',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -309,7 +272,6 @@ function fbs_field_default_field_instances() {
   t('Phone');
   t('Phone notifications');
   t('Preferred branch');
-  t('Preferred language');
 
   return $field_instances;
 }

@@ -11,27 +11,17 @@
  * login.
  */
 function fbs_wayf_login_credentials($authentication_attributes) {
-  // Retrieve the CPR number from the UCFMD service.
-  if (module_exists('ding_ucfmd')) {
-    $cpr = module_invoke(
-      'ding_ucfmd',
-      'retrieve_cpr',
-      $authentication_attributes['organizationName'],
-      $authentication_attributes['eduPersonPrincipalName']
-    );
+  // Generate a one time password for this request. Shouldn't really be needed
+  // as we'll check in the login function that wayf was called for the user, but
+  // it'll add some randomness to the procedure.
+  $pass = user_password(16);
+  _fbs_wayf_login($authentication_attributes['schacPersonalUniqueID'], $pass);
+  $credentials = array(
+    'name' => $authentication_attributes['schacPersonalUniqueID'],
+    'pass' => $pass,
+  );
 
-    $pass = user_password(16);
-    _fbs_wayf_login($authentication_attributes['eduPersonPrincipalName'], $pass);
-
-    $credentials = array(
-      'name' => $cpr,
-      'pass' => $pass,
-    );
-
-    return $credentials;
-  }
-
-  return [];
+  return $credentials;
 }
 
 /**
@@ -41,11 +31,8 @@ function fbs_wayf_login_credentials($authentication_attributes) {
  */
 function fbs_wayf_attributes() {
   return array(
-    'organizationName' => array(
-      'field' => NULL,
-    ),
-    'eduPersonPrincipalName' => array(
-      'field' => NULL,
+    'schacPersonalUniqueID' => array(
+      'field' => 'CPR',
     ),
   );
 }

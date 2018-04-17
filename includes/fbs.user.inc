@@ -17,13 +17,7 @@
  *   Authentication result.
  */
 function fbs_user_authenticate($name, $pincode) {
-  $service = fbs_service();
-  if (!$service) {
-    return array(
-      'success' => FALSE,
-    );
-  }
-
+  $res = new stdClass();
   $pass = _fbs_wayf_login($name);
   if ($pass) {
     // Wayf login.
@@ -35,20 +29,33 @@ function fbs_user_authenticate($name, $pincode) {
       );
     }
 
-    $res = $service->Patron->getPreAuthenticatedPatron($service->agencyId, $name);
+    try {
+      $res = fbs_service()->Patron->getPreAuthenticatedPatron(fbs_service()->agencyId, $name);
+    }
+    catch (Exception $e) {
+      watchdog_exception('fbs', $e);
+    }
   }
   else {
     // Normal login.
     $auth = new FBS\Model\AuthenticationRequest();
     $auth->libraryCardNumber = $name;
     $auth->pincode = $pincode;
-    $res = $service->Patron->authenticate($service->agencyId, $auth);
+
+    try {
+      $res = fbs_service()->Patron->authenticate(fbs_service()->agencyId, $auth);
+    }
+    catch (Exception $e) {
+      watchdog_exception('fbs', $e);
+    }
   }
 
   $result = array(
-    'success' => $res->authenticated,
+    'success' => FALSE,
   );
-  if ($res->authenticated) {
+  if (!empty($res->authenticated)) {
+    $result['success'] = TRUE;
+
     // Save patron info in creds.
     $result['creds'] = _fbs_patron_info($res->patron);
 
@@ -118,23 +125,31 @@ function fbs_user_get_name($account) {
 function fbs_user_update_pincode($account, $new_pincode) {
   $patron_info = fbs_get_patron_info($account);
 
-  $update = new FBS\Model\UpdatePatronRequestV3();
+  $update = new FBS\Model\UpdatePatronRequest();
   $pincode_change = new FBS\Model\PincodeChange();
   $pincode_change->pincode = $new_pincode;
   $pincode_change->libraryCardNumber = $patron_info['library_card_number'];
   $update->pincodeChange = $pincode_change;
 
-  $service = fbs_service();
-  if (!$service) {
+  $res = NULL;
+  try {
+    $res = fbs_service()->Patron->update(fbs_service()->agencyId, fbs_patron_id($account), $update);
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
+
     return array(
-      'creds' => FALSE
+      'creds' => FALSE,
     );
   }
-  $res = $service->Patron->update($service->agencyId, fbs_patron_id($account), $update);
+
   // FBS doesn't give any other indication of success than returning rather
   // than throwing an error.
-  $result = array('creds' => _fbs_patron_info($res->patron));
-  $result['creds']['library_card_number'] = $patron_info['library_card_number'];
+  $result = array();
+  if ($res) {
+    $result = array('creds' => _fbs_patron_info($res->patron));
+    $result['creds']['library_card_number'] = $patron_info['library_card_number'];
+  }
 
   return $result;
 }
@@ -158,13 +173,12 @@ function fbs_user_update_pincode($account, $new_pincode) {
  */
 function fbs_user_create($cpr, $pin_code, $name, $mail, $branch_id) {
   try {
-    $create_request = new FBS\Model\CreatePatronRequestV3();
+    $create_request = new FBS\Model\CreatePatronRequest();
     $create_request->cprNumber = $cpr;
     $create_request->pincode = $pin_code;
-    $create_request->patron = new FBS\Model\PatronSettingsV3();
+    $create_request->patron = new FBS\Model\PatronSettings();
     $create_request->patron->emailAddress = $mail;
     $create_request->patron->preferredPickupBranch = $branch_id;
-    $create_request->patron->preferredLanguage = NULL;
     $create_request->patron->receiveEmail = TRUE;
     $create_request->patron->receivePostalMail = FALSE;
     $create_request->patron->receiveSms = FALSE;
@@ -179,7 +193,8 @@ function fbs_user_create($cpr, $pin_code, $name, $mail, $branch_id) {
     throw $exception;
   }
 }
-/**
+
+/** 
  * Implements clear_cache().
  *
  * This hook is only called from ding_dibs after a payment have been accepted.

@@ -6,31 +6,6 @@
  */
 
 /**
- * Fetches user loans.
- *
- * @param $account
- *   User object whose loans are fetched.
- *
- * @return array
- *   Set of user loans.
- */
-function fbs_loan_raw_list(stdClass $account) {
-  $fbs_loans_result = &drupal_static(__FUNCTION__ . $account->uid, array());
-
-  $service = fbs_service();
-  if ($service && empty($fbs_loans_result)) {
-    try {
-      $fbs_loans_result = $service->MaterialLoans->getLoans($service->agencyId, fbs_patron_id($account));
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
-    }
-  }
-
-  return $fbs_loans_result;
-}
-
-/**
  * Implements provider loan, list.
  *
  * @param object $account
@@ -40,19 +15,26 @@ function fbs_loan_raw_list(stdClass $account) {
  *   Loan information.
  */
 function fbs_loan_list($account) {
-  $result = array();
-  $fbs_loans_result = fbs_loan_raw_list($account);
-
-  // Lookup v3 loan id's.
-  $loan_ids = array();
-  foreach ($fbs_loans_result as $loan) {
-    $loan_ids[] = $loan->loanDetails->recordId;
+  $res = array();
+  try {
+    $res = fbs_service()->MaterialLoans->getLoans(fbs_service()->agencyId, fbs_patron_id($account));
   }
-  $loan_ids = ding_provider_lookup_entity_id($loan_ids);
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
+  }
 
-  foreach ($fbs_loans_result as $loan) {
+  $ids = array();
+  foreach ($res as $loan) {
+    $ids[$loan->loanDetails->recordId] = $loan->loanDetails->recordId;
+  }
+  $ids = ding_provider_build_entity_id($ids);
+
+  $result = array();
+  foreach ($res as $loan) {
+    $id = $loan->loanDetails->loanId;
+
     $loan_data = array(
-      'ding_entity_id' => $loan_ids[$loan->loanDetails->recordId],
+      'ding_entity_id' => $ids[$loan->loanDetails->recordId],
       'loan_date' => $loan->loanDetails->loanDate,
       'expiry' => $loan->loanDetails->dueDate,
       'renewable' => $loan->isRenewable,
@@ -79,7 +61,6 @@ function fbs_loan_list($account) {
       $loan_data['display_name'] = $loan->loanDetails->ilBibliographicRecord->title;
     }
 
-    $id = $loan->loanDetails->loanId;
     $result[$id] = new DingProviderLoan($id, $loan_data);
   }
 
@@ -98,27 +79,32 @@ function fbs_loan_list($account) {
  *   Result of revewals.
  */
 function fbs_loan_renew($account, $loans) {
-  $result = array();
   $res = array();
-
-  $service = fbs_service();
-  if ($service) {
-    try {
-      $res = $service->MaterialLoans->renewLoans($service->agencyId, fbs_patron_id($account), $loans);
-    }
-    catch (Exception $e) {
-      watchdog_exception($e);
-    }
+  try {
+    $res = fbs_service()->MaterialLoans->renewLoans(fbs_service()->agencyId, fbs_patron_id($account), $loans);
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
   }
 
+  $result = array();
   foreach ($res as $loan) {
     // Using an array for renewalStatus is an odd choice, but we'll only
     // consider the loan renewed if 'renewed' is the only status.
     if ($loan->renewalStatus == array('renewed')) {
-      $result[$loan->loanDetails->loanId] = DingProviderLoan::STATUS_RENEWED;
+      $result[$loan->loanDetails->loanId] =
+        $loan->loanDetails->loanType == 'interLibraryLoan' ?
+        DingProviderLoan::STATUS_RENEWAL_REQUESTED :
+        DingProviderLoan::STATUS_RENEWED;
     }
     else {
       $result[$loan->loanDetails->loanId] = DingProviderLoan::STATUS_NOT_RENEWED;
+      if (in_array('deniedMaxRenewalsReached', $loan->renewalStatus)) {
+        $result[$loan->loanDetails->loanId] = DingProviderLoan::STATUS_RENEWAL_NUM_EXCEEDED;
+      }
+      if (in_array('deniedReserved', $loan->renewalStatus)) {
+        $result[$loan->loanDetails->loanId] = DingProviderLoan::STATUS_RENEWAL_RESERVED;
+      }
     }
   }
 

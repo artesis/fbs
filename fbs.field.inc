@@ -98,19 +98,6 @@ function fbs_field_info() {
       'property_callbacks' => array('fbs_field_property_callback'),
     ),
 
-    'fbs_preferred_language' => array(
-      'label' => t('Preferred language from FBS'),
-      'description' => t('The users preferred language from the FBS provider'),
-      'default_widget' => 'fbs_options_select',
-      'default_formatter' => 'fbs_preferred_language',
-      'virtual_field' => array(
-        'entity_types' => array('profile2'),
-        'add_widget' => TRUE,
-      ),
-      'property_type' => 'text',
-      'property_callbacks' => array('fbs_field_property_callback'),
-    ),
-
     'fbs_on_hold' => array(
       'label' => t('On hold period from FBS'),
       'description' => t('Period where user should not get any reservations'),
@@ -136,7 +123,7 @@ function fbs_field_info() {
       'property_type' => 'struct',
       'property_callbacks' => array('fbs_field_property_callback'),
     ),
-);
+  );
 }
 
 /**
@@ -157,7 +144,7 @@ function fbs_field_widget_info() {
     // them thinly.
     $return['fbs_options_select'] = array(
       'label' => t('Select list (FBS)'),
-      'field types' => array('fbs_preferred_branch', 'fbs_preferred_language'),
+      'field types' => array('fbs_preferred_branch'),
       'behaviors' => array(
         'multiple values' => FIELD_BEHAVIOR_CUSTOM,
       ),
@@ -191,7 +178,7 @@ function fbs_field_widget_form(&$form, &$form_state, $field, $instance, $langcod
       foreach ($fields as $key => $title) {
         $default_value = '';
         if (!empty($items[$delta][$key])) {
-          $date = new DateObject("@" + $items[$delta][$key]);
+          $date = new DateObject("@" . $items[$delta][$key]);
           $default_value = $date->format(DATE_FORMAT_DATETIME);
         }
         $element[$key] = array(
@@ -244,7 +231,21 @@ function fbs_field_property_callback(&$info, $entity_type, $field, $instance, $f
   else {
     $property['getter callback'] = 'fbs_field_metadata_get';
   }
-  unset($property['setter callback']);
+
+  switch ($name) {
+    case 'field_fbs_preferred_branch':
+      $property['setter callback'] = 'fbs_field_metadata_set';
+      break;
+
+    case 'field_fbs_on_hold':
+      $property['setter callback'] = 'entity_metadata_field_verbatim_set';
+      break;
+
+    default:
+      unset($property['setter callback']);
+      break;
+  }
+  
   unset($property['query callback']);
 }
 
@@ -258,6 +259,16 @@ function fbs_field_metadata_get($entity, array $options, $name, $entity_type, &$
     return $val['value'];
   }
   return NULL;
+}
+
+/**
+ * Callback to set the value of a field.
+ */
+function fbs_field_metadata_set($entity, $name, $items, $langcode, $entity_type) {
+  if (!isset($items['value'])) {
+    $items = array('value' => $items);
+  }
+  entity_metadata_field_verbatim_set($entity, $name, $items, $langcode, $entity_type);
 }
 
 /**
@@ -297,7 +308,6 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
     'fbs_phone_notification',
     'fbs_mail_notification',
     'fbs_preferred_branch',
-    'fbs_preferred_language',
     'fbs_on_hold',
     'fbs_address',
   );
@@ -305,8 +315,8 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
     try {
       $patron = ding_user_get_creds($user);
     }
-    catch (DingProviderAuthException $e) {
-      watchdog_exception('FBS', $e);
+    catch (Exception $e) {
+      // No creds, don't return anything.
       return;
     }
     foreach ($entities as $id => $entity) {
@@ -327,10 +337,6 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
 
           case 'fbs_preferred_branch':
             $items[$id][0] = array('value' => $patron['preferred_branch']);
-            break;
-
-          case 'fbs_preferred_language':
-            $items[$id][0] = array('value' => $patron['preferred_language']);
             break;
 
           case 'fbs_phone_notification':
@@ -379,10 +385,8 @@ function fbs_options_list($field, $instance, $entity_type, $entity) {
     );
   }
   elseif ($field['type'] == 'fbs_preferred_branch') {
-    return fbs_branches();
-  }
-  elseif ($field['type'] == 'fbs_preferred_language') {
-    return fbs_languages();
+    global $user;
+    return fbs_user_branches($user);
   }
 }
 
@@ -400,7 +404,6 @@ function fbs_field_is_empty($item, $field) {
       return TRUE;
     }
   }
-
   return FALSE;
 }
 
@@ -430,13 +433,6 @@ function fbs_field_formatter_info() {
       'label' => t('Default'),
       'field types' => array(
         'fbs_preferred_branch',
-      ),
-    ),
-
-    'fbs_preferred_language' => array(
-      'label' => t('Default'),
-      'field types' => array(
-        'fbs_preferred_language',
       ),
     ),
 
@@ -476,22 +472,10 @@ function fbs_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         break;
 
       case 'fbs_preferred_branch':
-        $branches = fbs_branches();
+        global $user;
+        $branches = fbs_user_branches($user);
         if (isset($branches[$item['value']])) {
           $title = $branches[$item['value']];
-        }
-        else {
-          $title = t('Unknown');
-        }
-        $element[$delta] = array(
-          '#markup' => check_plain($title),
-        );
-        break;
-
-      case 'fbs_preferred_language':
-        $languages = fbs_languages();
-        if (isset($languages[$item['value']])) {
-          $title = $languages[$item['value']];
         }
         else {
           $title = t('Unknown');
@@ -506,24 +490,18 @@ function fbs_field_formatter_view($entity_type, $entity, $field, $instance, $lan
           return;
         }
         elseif (empty($item['from'])) {
-          $markup = t('To !end-date', array(
-                      '!end-date' => format_date($item['to'],
-                                   'ding_material_lists_date'),
-          ));
+          $end_date = format_date($item['to'], 'ding_material_lists_date');
+          $markup = t('To !end-date', array('!end-date' => $end_date));
         }
         elseif (empty($item['to'])) {
-          $markup = t('From !start-date', array(
-                      '!start-date' => format_date($item['from'],
-                                     'ding_material_lists_date'),
-                    ));
+          $start_date = format_date($item['from'], 'ding_material_lists_date');
+          $markup = t('From !start-date', array('!start-date' => $start_date));
         }
         else {
-          $markup = t('From !start-date to !end-date', array(
-                      '!start-date' => format_date($item['from'],
-                                     'ding_material_lists_date'),
-                      '!end-date' => format_date($item['to'],
-                                   'ding_material_lists_date'),
-                    ));
+          $start_date = format_date($item['from'], 'ding_material_lists_date');
+          $end_date = format_date($item['to'], 'ding_material_lists_date');
+          $placeholders = array('!start-date' => $start_date, '!end-date' => $end_date);
+          $markup = t('From !start-date to !end-date', $placeholders);
         }
 
         $element[$delta] = array(

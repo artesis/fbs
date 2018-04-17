@@ -6,31 +6,6 @@
  */
 
 /**
- * Fetches user debts.
- *
- * @param $account
- *   User object whose debts are fetched.
- *
- * @return array
- *   Set of user debts.
- */
-function fbs_debt_raw_list(stdClass $account) {
-  $fbs_debts_result = &drupal_static(__FUNCTION__ . $account->uid, array());
-
-  $service = fbs_service();
-  if ($service && empty($fbs_debts_result)) {
-    try {
-      $fbs_debts_result = fbs_service()->Payment->getFees(fbs_service()->agencyId, fbs_patron_id($account), FALSE, FALSE);
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
-    }
-  }
-
-  return $fbs_debts_result;
-}
-
-/**
  * Implements provider debt, list.
  *
  * @param object $account
@@ -41,19 +16,26 @@ function fbs_debt_raw_list(stdClass $account) {
  */
 function fbs_debt_list($account) {
   $result = array();
-  $fbs_debts_result = fbs_debt_raw_list($account);
+  $res = array();
 
-  $debt_ids = array();
-  foreach ($fbs_debts_result as $fee) {
+  try {
+    $res = fbs_service()->Payment->getFees(fbs_service()->agencyId, fbs_patron_id($account), FALSE, FALSE);
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
+  }
+
+  $ids = array();
+  foreach ($res as $fee) {
     // The entity is only fetched in this case.
     if (!empty($fee->materials) && count($fee->materials) == 1) {
       $material = reset($fee->materials);
-      $debt_ids[$material->recordId] = $material->recordId;
+      $ids[$material->recordId] = $material->recordId;
     }
   }
-  $debt_ids = ding_provider_lookup_entity_id($debt_ids);
+  $ids = ding_provider_build_entity_id($ids);
 
-  foreach ($fbs_debts_result as $fee) {
+  foreach ($res as $fee) {
     $id = $fee->feeId;
 
     $data = array(
@@ -77,13 +59,11 @@ function fbs_debt_list($account) {
         $record_ids[] = $material->recordId;
       }
 
-      // If there's only one material, use its title as display_name.
+      // If there's only one material, use its title as display_name;
       if (count($record_ids) == 1) {
         $record_id = reset($record_ids);
-        $entity = ding_entity_load($debt_ids[$record_id]);
-        if (!empty($entity)) {
-          $data['display_name'] = $entity->getTitle();
-        }
+        $entity = ding_entity_load($ids[$record_id]);
+        $data['display_name'] = $entity->getTitle();
       }
       elseif (count($record_ids) > 1) {
         $data['display_name'] = t('Multiple materials');
@@ -92,7 +72,6 @@ function fbs_debt_list($account) {
     }
 
     $result[$id] = new DingProviderDebt($id, $data);
-
   }
 
   return $result;
