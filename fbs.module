@@ -619,4 +619,21 @@ function fbs_form_profile2_edit_provider_fbs_form_alter(&$form, &$form_state, $f
   $form['profile_provider_fbs']['field_fbs_preferred_branch']['#disabled'] = !$allow_profile_edit;
   $form['profile_provider_fbs']['field_fbs_phone']['#disabled'] = !$allow_profile_edit;
   $form['profile_provider_fbs']['field_fbs_phone_notification']['#disabled'] = !$allow_profile_edit;
+
+  // Disable "SMS Fee" notice.
+  unset($form["ding_user_fee_sms"]);
+}
+
+/**
+ * Implements hook_preprocess().
+ */
+function fbs_preprocess_panels_pane(&$variables) {
+  if ($variables['pane']->type == 'user_profile') {
+    $variables["content"]["profile_provider_fbs"]["#title"] = t('User profile');
+    unset($variables["content"]["profile_provider_fbs"]["#prefix"]);
+  }
+
+  if ($variables['pane']->type == 'profile2_form' && $variables['pane']->subtype == 'profile2_form') {
+    $variables['title'] = t('Edit user profile');
+  }
 }
