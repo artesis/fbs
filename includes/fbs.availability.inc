@@ -11,21 +11,24 @@
  *   Array of ting object ids (faust).
  *
  * @return array
- *   Avaliability info.
+ *   Availability info.
  */
 function fbs_availability_items($provider_ids) {
-  $avails = array();
+  $items = array();
 
   try {
-    $avails = fbs_service()->Catalog->getAvailability(fbs_service()->agencyId, $provider_ids, variable_get('fbs_holdings_branches_blacklist', array()));
+    $items = fbs_service()->Catalog->getAvailability(fbs_service()->agencyId, $provider_ids, variable_get('fbs_holdings_branches_blacklist', array()));
   }
   catch (Exception $e) {
     watchdog_exception('fbs', $e);
   }
 
   $result = array();
-  foreach ($avails as $item) {
-    $result[$item->recordId] = array('available' => $item->available, 'reservable' => $item->reservable);
+  foreach ($items as $item) {
+    $result[$item->recordId] = array(
+      'available' => $item->available,
+      'reservable' => $item->reservable,
+    );
   }
 
   return $result;
@@ -44,7 +47,11 @@ function fbs_availability_holdings($provider_ids) {
   $holdings = array();
 
   try {
-    $holdings = fbs_service()->Catalog->getHoldings(fbs_service()->agencyId, $provider_ids, variable_get('fbs_holdings_branches_blacklist', array()));
+    $service = fbs_service();
+    $agency_id = $service->agencyId;
+    $blacklist = variable_get('fbs_holdings_branches_blacklist', array());
+
+    $holdings = $service->Catalog->getHoldings($agency_id, $provider_ids, $blacklist);
   }
   catch (Exception $e) {
     watchdog_exception('fbs', $e);

@@ -274,6 +274,17 @@ function fbs_settings_form() {
     '#default_value' => variable_get('fbs_allow_profile_edit', FALSE),
   );
 
+  $form['fbs']['fbs_sort_departments'] = array(
+    '#type' => 'select',
+    '#title' => t('Sort departments alphabetically'),
+    '#description' => t('Allow to sort the information on departments of the library in alphabetical order. Default is "Ascending".'),
+    '#options' => array(
+      SORT_ASC => t('Ascending'),
+      SORT_DESC => t('Descending'),
+    ),
+    '#default_value' => variable_get('fbs_sort_departments', SORT_ASC),
+  );
+
   // Branches and blacklisted branches.
   $form['branches'] = array(
     '#type' => 'fieldset',

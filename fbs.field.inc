@@ -281,7 +281,7 @@ function fbs_field_metadata_get($entity, array $options, $name, $entity_type, &$
  */
 function fbs_field_metadata_set($entity, $name, $items, $langcode, $entity_type) {
   if (!isset($items['value'])) {
-    $items = array('value' => $items);
+    $items['value'] = $items;
   }
   entity_metadata_field_verbatim_set($entity, $name, $items, $langcode, $entity_type);
 }
