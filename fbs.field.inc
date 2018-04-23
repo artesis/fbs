@@ -97,6 +97,18 @@ function fbs_field_info() {
       'property_type' => 'text',
       'property_callbacks' => array('fbs_field_property_callback'),
     ),
+    'fbs_preferred_language' => array(
+      'label' => t('Preferred language from FBS'),
+      'description' => t('The users preferred language from the FBS provider'),
+      'default_widget' => 'fbs_options_select',
+      'default_formatter' => 'fbs_preferred_language',
+      'virtual_field' => array(
+        'entity_types' => array('profile2'),
+        'add_widget' => TRUE,
+      ),
+      'property_type' => 'text',
+      'property_callbacks' => array('fbs_field_property_callback'),
+    ),
 
     'fbs_on_hold' => array(
       'label' => t('On hold period from FBS'),
@@ -144,14 +156,17 @@ function fbs_field_widget_info() {
     // them thinly.
     $return['fbs_options_select'] = array(
       'label' => t('Select list (FBS)'),
-      'field types' => array('fbs_preferred_branch'),
+      'field types' => array('fbs_preferred_branch', 'fbs_preferred_language'),
       'behaviors' => array(
         'multiple values' => FIELD_BEHAVIOR_CUSTOM,
       ),
     );
     $return['fbs_options_onoff'] = array(
       'label' => t('Single on/off checkbox (FBS)'),
-      'field types' => array('fbs_phone_notification', 'fbs_mail_notification'),
+      'field types' => array(
+        'fbs_phone_notification',
+        'fbs_mail_notification'
+      ),
       'behaviors' => array(
         'multiple values' => FIELD_BEHAVIOR_CUSTOM,
       ),
@@ -245,7 +260,7 @@ function fbs_field_property_callback(&$info, $entity_type, $field, $instance, $f
       unset($property['setter callback']);
       break;
   }
-  
+
   unset($property['query callback']);
 }
 
@@ -308,6 +323,7 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
     'fbs_phone_notification',
     'fbs_mail_notification',
     'fbs_preferred_branch',
+    'fbs_preferred_language',
     'fbs_on_hold',
     'fbs_address',
   );
@@ -337,6 +353,10 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
 
           case 'fbs_preferred_branch':
             $items[$id][0] = array('value' => $patron['preferred_branch']);
+            break;
+
+          case 'fbs_preferred_language':
+            $items[$id][0] = array('value' => $patron['preferred_language']);
             break;
 
           case 'fbs_phone_notification':
@@ -378,7 +398,10 @@ function fbs_field_load($entity_type, $entities, $field, $instances, $langcode, 
  * Implements hook_options_list().
  */
 function fbs_options_list($field, $instance, $entity_type, $entity) {
-  if (in_array($field['type'], array('fbs_phone_notification', 'fbs_mail_notification'))) {
+  if (in_array($field['type'], array(
+    'fbs_phone_notification',
+    'fbs_mail_notification'
+  ))) {
     return array(
       0 => t('No'),
       1 => t('Yes'),
@@ -387,6 +410,9 @@ function fbs_options_list($field, $instance, $entity_type, $entity) {
   elseif ($field['type'] == 'fbs_preferred_branch') {
     global $user;
     return fbs_user_branches($user);
+  }
+  elseif ($field['type'] == 'fbs_preferred_language') {
+    return fbs_languages();
   }
 }
 
@@ -400,7 +426,7 @@ function fbs_field_is_empty($item, $field) {
     }
   }
   else {
-    if (empty($item['value']) && (string) $item['value'] !== '0') {
+    if (empty($item['value']) && (string)$item['value'] !== '0') {
       return TRUE;
     }
   }
@@ -436,14 +462,21 @@ function fbs_field_formatter_info() {
       ),
     ),
 
-    'fbs_period_default'  => array(
+    'fbs_preferred_language' => array(
+      'label' => t('Default'),
+      'field types' => array(
+        'fbs_preferred_language',
+      ),
+    ),
+
+    'fbs_period_default' => array(
       'label' => t('Default'),
       'field types' => array(
         'fbs_on_hold',
       ),
     ),
 
-    'fbs_address_default'  => array(
+    'fbs_address_default' => array(
       'label' => t('Default'),
       'field types' => array(
         'fbs_address',
@@ -485,6 +518,19 @@ function fbs_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         );
         break;
 
+      case 'fbs_preferred_language':
+        $languages = fbs_languages();
+        if (isset($languages[$item['value']])) {
+          $title = $languages[$item['value']];
+        }
+        else {
+          $title = t('Unknown');
+        }
+        $element[$delta] = array(
+          '#markup' => check_plain($title),
+        );
+        break;
+
       case 'fbs_period_default':
         if (empty($item['from']) && empty($item['to'])) {
           return;
@@ -500,7 +546,10 @@ function fbs_field_formatter_view($entity_type, $entity, $field, $instance, $lan
         else {
           $start_date = format_date($item['from'], 'ding_material_lists_date');
           $end_date = format_date($item['to'], 'ding_material_lists_date');
-          $placeholders = array('!start-date' => $start_date, '!end-date' => $end_date);
+          $placeholders = array(
+            '!start-date' => $start_date,
+            '!end-date' => $end_date
+          );
           $markup = t('From !start-date to !end-date', $placeholders);
         }
 
@@ -512,9 +561,7 @@ function fbs_field_formatter_view($entity_type, $entity, $field, $instance, $lan
       case 'fbs_address_default':
         if ($item['value']) {
           $element[$delta] = array(
-            '#markup' => $item['value']['street'] . '<br />' .
-            $item['value']['postal'] . ' ' . $item['value']['city'] . '<br />' .
-            $item['value']['country'],
+            '#markup' => $item['value']['street'] . '<br />' . $item['value']['postal'] . ' ' . $item['value']['city'] . '<br />' . $item['value']['country'],
           );
         }
         break;

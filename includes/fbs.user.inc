@@ -179,6 +179,7 @@ function fbs_user_create($cpr, $pin_code, $name, $mail, $branch_id) {
     $create_request->patron = new FBS\Model\PatronSettings();
     $create_request->patron->emailAddress = $mail;
     $create_request->patron->preferredPickupBranch = $branch_id;
+    $create_request->patron->preferredLanguage = NULL;
     $create_request->patron->receiveEmail = TRUE;
     $create_request->patron->receivePostalMail = FALSE;
     $create_request->patron->receiveSms = FALSE;

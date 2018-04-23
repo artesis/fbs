@@ -267,6 +267,13 @@ function fbs_settings_form() {
     '#description' => t('Allow users to delete their reservations as well as ready for pickup ones.'),
   );
 
+  $form['fbs']['fbs_allow_profile_edit'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable profile edit'),
+    '#description' => t('Allow users to edit their own Email, Branch and Phone fields.'),
+    '#default_value' => variable_get('fbs_allow_profile_edit', FALSE),
+  );
+
   // Branches and blacklisted branches.
   $form['branches'] = array(
     '#type' => 'fieldset',
@@ -359,6 +366,7 @@ function fbs_profile2_presave($entity) {
     'receiveSms' => (bool) $wrapper->field_fbs_phone_notification->value(),
     'receiveEmail' => (bool) $wrapper->field_fbs_mail_notification->value(),
     'preferredPickupBranch' => $wrapper->field_fbs_preferred_branch->value(),
+    'preferredLanguage' => $wrapper->field_fbs_preferred_language->value(),
   );
 
   if ($patron['on_hold']) {
@@ -374,6 +382,7 @@ function fbs_profile2_presave($entity) {
     'receiveEmail' => (bool) $patron['mail_notification'],
     'preferredPickupBranch' => $patron['preferred_branch'],
     'onHold' => $patron['on_hold'],
+    'preferredLanguage' => $patron['preferred_language'],
   );
 
   if (array_diff_assoc($current, $existing) || array_diff_assoc($current_on_hold, $existing_on_hold)) {
@@ -491,6 +500,38 @@ function fbs_user_branches($account) {
 }
 
 /**
+ * Get FBS languages.
+ *
+ * @return array
+ *   Array of languages.
+ */
+function fbs_languages() {
+  $languages = &drupal_static(__FUNCTION__, NULL);
+  if (is_null($languages)) {
+    $service = fbs_service();
+
+    if ($service) {
+      $res = array();
+      $languages = array();
+      try {
+        $res = $service->Patron->getLanguages($service->agencyId);
+      }
+      catch (Exception $e) {
+        watchdog_exception('fbs', $e);
+      }
+
+      $lang_list = language_list();
+
+      foreach ($res as $language) {
+        $languages[$language->language] = $lang_list[$language->language]->native;
+      }
+    }
+  }
+
+  return $languages;
+}
+
+/**
  * Get interest periods.
  *
  * @return array
@@ -589,6 +630,7 @@ function _fbs_patron_info(Patron $patron) {
     'phone_notification' => $patron->receiveSms,
     'mail_notification' => $patron->receiveEmail,
     'preferred_branch' => $patron->preferredPickupBranch,
+    'preferred_language' => $patron->preferredLanguage,
     'on_hold' => NULL,
     'address' => NULL,
   );
@@ -738,6 +780,36 @@ function fbs_ting_pre_execute($request) {
  *
  * Adds " around the string and escapes inline ".
  */
+
 function _fbs_cql_quote_string($name) {
   return '"' . preg_replace('/"/', '\\"', $name) . '"';
+}
+
+/**
+ * Hide unnecessary fields.
+ */
+function fbs_form_profile2_edit_provider_fbs_form_alter(&$form, &$form_state, $form_id) {
+  $allow_profile_edit = variable_get('fbs_allow_profile_edit', FALSE);
+  $form['profile_provider_fbs']['field_fbs_mail']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_mail_notification']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_preferred_branch']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_phone']['#disabled'] = !$allow_profile_edit;
+  $form['profile_provider_fbs']['field_fbs_phone_notification']['#disabled'] = !$allow_profile_edit;
+
+  // Disable "SMS Fee" notice.
+  unset($form["ding_user_fee_sms"]);
+}
+
+/**
+ * Implements hook_preprocess().
+ */
+function fbs_preprocess_panels_pane(&$variables) {
+  if ($variables['pane']->type == 'user_profile') {
+    $variables["content"]["profile_provider_fbs"]["#title"] = t('User profile');
+    unset($variables["content"]["profile_provider_fbs"]["#prefix"]);
+  }
+
+  if ($variables['pane']->type == 'profile2_form' && $variables['pane']->subtype == 'profile2_form') {
+    $variables['title'] = t('Edit user profile');
+  }
 }
