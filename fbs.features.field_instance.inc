@@ -50,9 +50,10 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
+        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 6,
+        'type' => 'fbs_default',
+        'weight' => 3,
       ),
     ),
     'entity_type' => 'profile2',
@@ -83,9 +84,10 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
+        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 5,
+        'type' => 'fbs_notification',
+        'weight' => 4,
       ),
     ),
     'entity_type' => 'profile2',
@@ -146,9 +148,10 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
+        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 3,
+        'type' => 'fbs_period_default',
+        'weight' => 8,
       ),
     ),
     'entity_type' => 'profile2',
@@ -176,9 +179,10 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
+        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 7,
+        'type' => 'fbs_default',
+        'weight' => 2,
       ),
     ),
     'entity_type' => 'profile2',
@@ -209,9 +213,10 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
+        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 4,
+        'type' => 'fbs_notification',
+        'weight' => 5,
       ),
     ),
     'entity_type' => 'profile2',
@@ -241,9 +246,10 @@ function fbs_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'above',
+        'module' => 'fbs',
         'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 2,
+        'type' => 'fbs_preferred_branch',
+        'weight' => 7,
       ),
     ),
     'entity_type' => 'profile2',

@@ -54,7 +54,9 @@ function fbs_availability_holdings($provider_ids) {
   $tmp_issues = array();
   foreach ($holdings as $item) {
     $result[$item->recordId] = array(
+      'local_id' => $item->recordId,
       'reservable' => $item->reservable,
+      'show_reservation_button' => $item->reservable,
       // Gets properly set in the loop later.
       'available' => FALSE,
       'holdings' => array(),
@@ -63,6 +65,7 @@ function fbs_availability_holdings($provider_ids) {
       'is_internet' => FALSE,
       'reserved_count' => $item->reservations,
       'is_periodical' => FALSE,
+      'reservation_count' => $item->reservations,
     );
 
     $placement_parts = array(
