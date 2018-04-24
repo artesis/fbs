@@ -235,10 +235,10 @@ class AvailabilityProviderTest extends ProviderTestCase {
 
     $json_responses = array(
       // TCH1: Empty result for empty request
-      array(),
+       array(),
 
       // TCH2: Empty result for unknown material
-      array(
+       array(
         array(
           // HoldingsForBibliographicalRecord.
           'recordId' => 'iDontExist',
@@ -306,7 +306,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
       ),
 
       // TCH5: Return holdings for material MAT3: reservable=false/available=true
-      array(
+       array(
         array(
           // HoldingsForBibliographicalRecord.
           'recordId' => '870970-basis:51299116',
@@ -778,7 +778,7 @@ class AvailabilityProviderTest extends ProviderTestCase {
         'reservation_count' => 0,
         'is_periodical' => FALSE,
       ),
-      // MAT iDontExist
+       // MAT iDontExist
       'iDontExist' => array(
         'reservable' => FALSE,
         'available' => FALSE,

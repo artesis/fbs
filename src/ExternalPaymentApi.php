@@ -16,13 +16,11 @@ class ExternalPaymentApi extends SwaggerApi
      *  If the fee covers loaned materials, information about the materials is returned.
      *  Each fee in the response includes a 'type', which is used to distinguish between different types of
      *  fees.
-     *  If the material exists no more, which is the case for fees that are related to closed interlibraryloans,
-     *  then the fee is still returned, but without material information
      *  The list of available types currently is
-     *  
-     *  fee
-     *  compensation
-     *  
+     *
+     *  - fee
+     *  - compensation
+     *
      *  While the type can be used by client systems to look up a suitable display message for the end user, it is
      *  important that unrecognized types are treated as 'other'.
      *
@@ -59,11 +57,11 @@ class ExternalPaymentApi extends SwaggerApi
      *  fee identifiers for fees covered by the payment. It is expected that a fee has been paid in full when covered
      *  by a payment order. The client system is not allowed to offer partial payment of individual fees.
      *  The paymentStatus on the response can be any of these values:
-     *  
+     *
      *    - paymentRegistered
      *    - paymentRegisteredByDifferentOrderId
      *    - paymentNotAllowedByClient
-     *  
+     *
      *  If any other value is encountered, it should be treated as yet another reason for not registerering payment of
      *  a fee using the specified order id.
      *  Multiple calls to pay a fee with the same
