@@ -12,14 +12,13 @@ class ExternalCatalogApi extends SwaggerApi
      * Get availability of bibliographical records.
      *
      *
-     * Returns an array of availability for each bibliographical record.
+     *  Returns an array of availability for each bibliographical record.
      *
      * @param string $agencyid ISIL of the agency (e.g. DK-761500)
      * @param array $recordid list of record ids
-     * @param array $exclude Identifies the branchIds which are excluded from the result
      * @return AvailabilityV3[]
      */
-  public function getAvailability($agencyid, $recordid)
+    public function getAvailability($agencyid, $recordid)
     {
         $request = $this->newRequest("GET", "/external/{agencyid}/catalog/availability/v3");
         $request->addParameter("path", "agencyid", $agencyid);
@@ -32,66 +31,65 @@ class ExternalCatalogApi extends SwaggerApi
         return $request->execute();
     }
 
-  /**
-   * Retrieves all booking information for each branch of an agency for bookings that ends after the current date.
-   *
-   *
-   *
-   *  Returns an array of BookingBranchInfo which contains:
-   *
-   *  - the branch ID
-   *  - gross number of available materials for that branch
-   *  - array of BookingInfo for the given bibliographic record, containing the booking Period and the number of
-   *  preferred materials
-   *
-   *
-   *
-   *  This is to highlight when materials are available for a new potential booking.
-   *
-   *
-   * @param string $agencyid ISIL of the agency (e.g. DK-761500)
-   * @param string $recordid identifies the bibliographical record, i.e. the FAUST number
-   * @return BookingBranchInfoV3[]
-   */
-  public function bookingInformation($agencyid, $recordid) {
-    $request = $this->newRequest("GET", "/external/{agencyid}/catalog/bookingInformation/{recordid}/v3");
-    $request->addParameter("path", "agencyid", $agencyid);
-    $request->addParameter("path", "recordid", $recordid);
+    /**
+     * Retrieves all booking information for each branch of an agency for bookings that ends after the current date.
+     *
+     *
+     *
+     *  Returns an array of BookingBranchInfo which contains:
+     *
+     *  - the branch ID
+     *  - gross number of available materials for that branch
+     *  - array of BookingInfo for the given bibliographic record, containing the booking Period and the number of
+     *  preferred materials
+     *
+     *
+     *
+     *  This is to highlight when materials are available for a new potential booking.
+     *
+     *
+     * @param string $agencyid ISIL of the agency (e.g. DK-761500)
+     * @param string $recordid identifies the bibliographical record, i.e. the FAUST number
+     * @return BookingBranchInfoV3[]
+     */
+    public function bookingInformation($agencyid, $recordid)
+    {
+        $request = $this->newRequest("GET", "/external/{agencyid}/catalog/bookingInformation/{recordid}/v3");
+        $request->addParameter("path", "agencyid", $agencyid);
+        $request->addParameter("path", "recordid", $recordid);
 
-    $request->defineResponse(200, "", array('\\FBS\\Model\\BookingBranchInfoV3'));
-    $request->defineResponse("400", 'bad request com.dantek.dl.rest.RestException', NULL);
-    $request->defineResponse("401", 'client unauthorized', NULL);
-    $request->defineResponse("404", 'patron not found', NULL);
+        $request->defineResponse(200, "", array('\\FBS\\Model\\BookingBranchInfoV3'));
+        $request->defineResponse("400", 'bad request com.dantek.dl.rest.RestException', null);
+        $request->defineResponse("401", 'client unauthorized', null);
+        $request->defineResponse("404", 'patron not found', null);
 
-    return $request->execute();
-  }
+        return $request->execute();
+    }
 
-  /**
-   * Get placement holdings for bibliographical records.
-   *
-   *
-   *  Returns an array of holdings for each bibliographical record.
-   *
-   *  Returns an array of holdings for each bibliographical record together with the total number
-   *  of current active reservations.
-   *  The holdings lists the materials on each placement, and whether they are available on-shelf or lent out.
-   *
-   * @param string $agencyid ISIL of the agency (e.g. DK-761500)
-   * @param array $recordid Identifies the bibliographical records - The FAUST number.
-   * @param array $exclude Identifies the branchIds which are excluded from the result
-   * @return HoldingsForBibliographicalRecordV3[]
-   */
-  public function getHoldings($agencyid, $recordid) {
-    $request = $this->newRequest("GET", "/external/{agencyid}/catalog/holdings/v3");
-    $request->addParameter("path", "agencyid", $agencyid);
-    $request->addParameter("query", "recordid", $recordid);
+    /**
+     * Get placement holdings for bibliographical records.
+     *
+     *
+     *  Returns an array of holdings for each bibliographical record.
+     *  The holdings lists the materials on each placement, and whether they are available on-shelf or lent out.
+     *
+     * @param string $agencyid ISIL of the agency (e.g. DK-761500)
+     * @param array $recordid Identifies the bibliographical records - The FAUST number.
+     * @return HoldingsForBibliographicalRecordV3[]
+     */
+    public function getHoldings($agencyid, $recordid)
+    {
+        $request = $this->newRequest("GET", "/external/{agencyid}/catalog/holdings/v3");
+        $request->addParameter("path", "agencyid", $agencyid);
+        $request->addParameter("query", "recordid", $recordid);
 
-    $request->defineResponse(200, "", array('\\FBS\\Model\\HoldingsForBibliographicalRecordV3'));
-    $request->defineResponse("400", 'bad request', NULL);
-    $request->defineResponse("401", 'client unauthorized', NULL);
+        $request->defineResponse(200, "", array('\\FBS\\Model\\HoldingsForBibliographicalRecordV3'));
+        $request->defineResponse("400", 'bad request', null);
+        $request->defineResponse("401", 'client unauthorized', null);
 
-    return $request->execute();
-  }
+        return $request->execute();
+    }
 
 
 }
+
