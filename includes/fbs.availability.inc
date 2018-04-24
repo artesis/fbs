@@ -263,7 +263,6 @@ function fbs_availability_holdings($provider_ids) {
       }
       $result[$item->recordId]['issues'] = $issues;
     }
-
   }
 
   return $result;

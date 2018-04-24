@@ -47,5 +47,3 @@ files[] = includes/classes/FBSLogDrupal.php
 files[] = includes/classes/FBSLogInterface.php
 files[] = includes/classes/FBSLogStdout.php
 files[] = includes/classes/FBS.php
-mtime = 1499431707
-required = 1
