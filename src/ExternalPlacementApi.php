@@ -20,11 +20,10 @@ class ExternalPlacementApi extends SwaggerApi
      * @param array $exclude Identifies the branchIds which are excluded from the result
      * @return AgencyBranch[]
      */
-    public function getBranches($agencyid, $exclude = null)
+    public function getBranches($agencyid)
     {
         $request = $this->newRequest("GET", "/external/v1/{agencyid}/branches");
         $request->addParameter("path", "agencyid", $agencyid);
-        $request->addParameter("query", "exclude", $exclude);
 
         $request->defineResponse(200, "", array('\\FBS\\Model\\AgencyBranch'));
         $request->defineResponse("400", 'bad request', null);

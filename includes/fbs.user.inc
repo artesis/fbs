@@ -125,7 +125,7 @@ function fbs_user_get_name($account) {
 function fbs_user_update_pincode($account, $new_pincode) {
   $patron_info = fbs_get_patron_info($account);
 
-  $update = new FBS\Model\UpdatePatronRequest();
+  $update = new FBS\Model\UpdatePatronRequestV3();
   $pincode_change = new FBS\Model\PincodeChange();
   $pincode_change->pincode = $new_pincode;
   $pincode_change->libraryCardNumber = $patron_info['library_card_number'];
@@ -173,10 +173,10 @@ function fbs_user_update_pincode($account, $new_pincode) {
  */
 function fbs_user_create($cpr, $pin_code, $name, $mail, $branch_id) {
   try {
-    $create_request = new FBS\Model\CreatePatronRequest();
+    $create_request = new FBS\Model\CreatePatronRequestV3();
     $create_request->cprNumber = $cpr;
     $create_request->pincode = $pin_code;
-    $create_request->patron = new FBS\Model\PatronSettings();
+    $create_request->patron = new FBS\Model\PatronSettingsV3();
     $create_request->patron->emailAddress = $mail;
     $create_request->patron->preferredPickupBranch = $branch_id;
     $create_request->patron->preferredLanguage = NULL;

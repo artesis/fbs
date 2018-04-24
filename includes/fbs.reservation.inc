@@ -6,6 +6,31 @@
  */
 
 /**
+ * Fetches user reservations.
+ *
+ * @param $account
+ *   User object whose reserations are fetched.
+ *
+ * @return array
+ *   Set of user reservations.
+ */
+function fbs_reservation_raw_list(stdClass $account) {
+  $fbs_reservations_result = &drupal_static(__FUNCTION__ . $account->uid, array());
+
+  $service = fbs_service();
+  if ($service && empty($fbs_reservations_result)) {
+    try {
+      $fbs_reservations_result = $service->Reservations->getReservations($service->agencyId, fbs_patron_id($account));
+    }
+    catch (Exception $e) {
+      watchdog_exception('fbs', $e);
+    }
+  }
+
+  return $fbs_reservations_result;
+}
+
+/**
  * Implements provider reservation, list.
  *
  * @param object $account
@@ -17,13 +42,7 @@
  *   Reservation info.
  */
 function fbs_reservation_list($account, $requested_type = NULL) {
-  $res = array();
-  try {
-    $res = fbs_service()->Reservations->getReservations(fbs_service()->agencyId, fbs_patron_id($account));
-  }
-  catch (Exception $e) {
-    watchdog_exception('fbs', $e);
-  }
+  $res = fbs_reservation_raw_list($account);
 
   $result = array(
     DING_RESERVATION_READY => array(),
