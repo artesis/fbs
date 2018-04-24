@@ -9,13 +9,15 @@ class ExternalPatronApi extends SwaggerApi
 {
 
   /**
-   * Create a new patron who is a person.
+   * Create a new patron.
    *
    *
    *  When a patron doesn't have a patron account in the library system, but logs in using a trusted authentication
-   *  source (e.g NemId), the patron account can be created using this service. Name and address will be automatically
-   *  fetched from CPR-Registry, and cannot be supplied by the client. If the CPR-Registry is not authorized to
-   *  provide information about the patron, then repsonse message 404 will be sent back
+   *  source
+   *  (e.g NemId), the patron account can be created using this service. Name and address will be automatically
+   *  fetched from
+   *  CPR-Registry, and cannot be supplied by the client. If the CPR-Registry is not authorized to provide
+   *  information about the patron, then the name and address will not be set.
    *
    *  If a patron is blocked the reason is available as a code:
    *
@@ -32,15 +34,15 @@ class ExternalPatronApi extends SwaggerApi
    * @param Model\CreatePatronRequestV3 $createPatronRequest the patron to be created
    * @return AuthenticatedPatron
    */
-  public function create($agencyid, Model\CreatePatronRequestV3 $createPatronRequest) {
+  public function create($agencyid, Model\CreatePatronRequestV3 $createPatronRequest)
+  {
     $request = $this->newRequest("POST", "/external/{agencyid}/patrons/v3");
     $request->addParameter("path", "agencyid", $agencyid);
     $request->addParameter("body", "createPatronRequest", $createPatronRequest);
 
     $request->defineResponse(200, "", '\\FBS\\Model\\AuthenticatedPatronV3');
     $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
-    $request->defineResponse("401", 'client unauthorized', NULL);
-    $request->defineResponse("404", 'Data not found', NULL);
+    $request->defineResponse("401", 'client unauthorized', null);
 
     return $request->execute();
   }
@@ -65,16 +67,17 @@ class ExternalPatronApi extends SwaggerApi
    *
    * @param string $agencyid ISIL of the agency (e.g. DK-761500)
    * @param AuthenticationRequest $authenticationRequest credentials for patron to be authenticated
-   * @return AuthenticatedPatron
+   * @return AuthenticatedPatronV3
    */
-  public function authenticate($agencyid, Model\AuthenticationRequest $authenticationRequest) {
+  public function authenticate($agencyid, Model\AuthenticationRequest $authenticationRequest)
+  {
     $request = $this->newRequest("POST", "/external/{agencyid}/patrons/authenticate/v3");
     $request->addParameter("path", "agencyid", $agencyid);
     $request->addParameter("body", "authenticationRequest", $authenticationRequest);
 
     $request->defineResponse(200, "", '\\FBS\\Model\\AuthenticatedPatronV3');
     $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
-    $request->defineResponse("401", 'client unauthorized', NULL);
+    $request->defineResponse("401", 'client unauthorized', null);
 
     return $request->execute();
   }
@@ -84,8 +87,7 @@ class ExternalPatronApi extends SwaggerApi
    *
    *
    *  The returned patron details includes a patronId that has to be used by all subsequent
-   *  service calls made on behalf of that patron. Note: Whis method can only be used for patrons who
-   *  are people, and not e.g. Companies or Libraries.
+   *  service calls made on behalf of that patron.
    *
    *  If a patron is blocked the reason is available as a code:
    *
@@ -102,14 +104,15 @@ class ExternalPatronApi extends SwaggerApi
    * @param string $cprNumber CPR-number of the patron
    * @return AuthenticatedPatronV3
    */
-  public function getPreAuthenticatedPatron($agencyid, $cprNumber) {
+  public function getPreAuthenticatedPatron($agencyid, $cprNumber)
+  {
     $request = $this->newRequest("POST", "/external/{agencyid}/patrons/preauthenticated/v3");
     $request->addParameter("path", "agencyid", $agencyid);
     $request->addParameter("body", "cprNumber", $cprNumber);
 
     $request->defineResponse(200, "", '\\FBS\\Model\\AuthenticatedPatronV3');
     $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
-    $request->defineResponse("401", 'client unauthorized', NULL);
+    $request->defineResponse("401", 'client unauthorized', null);
 
     return $request->execute();
   }
@@ -119,8 +122,7 @@ class ExternalPatronApi extends SwaggerApi
    *
    *
    *  The returned patron details includes a patronId that has to be used by all subsequent
-   *  service calls made on behalf of that patron. Note: Whis method can only be used for patrons who
-   *  are persons, and not e.g. Companies or Libraries.
+   *  service calls made on behalf of that patron.
    *
    *  If a patron is blocked the reason is available as a code:
    *
@@ -135,16 +137,17 @@ class ExternalPatronApi extends SwaggerApi
    *
    * @param string $agencyid ISIL of the agency (e.g. DK-761500)
    * @param string $unicUsername UNIC username of the patron
-   * @return AuthenticatedPatron
+   * @return AuthenticatedPatronV3
    */
-  public function getPreAuthenticatedPatronFromUNIClogin($agencyid, $unicUsername) {
+  public function getPreAuthenticatedPatronFromUNIClogin($agencyid, $unicUsername)
+  {
     $request = $this->newRequest("POST", "/external/{agencyid}/patrons/preauthenticated/unic/v3");
     $request->addParameter("path", "agencyid", $agencyid);
     $request->addParameter("body", "unicUsername", $unicUsername);
 
     $request->defineResponse(200, "", '\\FBS\\Model\\AuthenticatedPatronV3');
     $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
-    $request->defineResponse("401", 'client unauthorized', NULL);
+    $request->defineResponse("401", 'client unauthorized', null);
 
     return $request->execute();
   }
@@ -170,10 +173,11 @@ class ExternalPatronApi extends SwaggerApi
    *
    * @param string $agencyid ISIL of the agency (e.g. DK-761500)
    * @param integer $patronid the patron to be updated
-   * @param UpdatePatronRequest $updatePatron updated information about the patron
+   * @param UpdatePatronRequestV3 $updatePatron updated information about the patron
    * @return AuthenticatedPatron
    */
-  public function update($agencyid, $patronid, Model\UpdatePatronRequest $updatePatron) {
+  public function update($agencyid, $patronid, Model\UpdatePatronRequestV3 $updatePatron)
+  {
     $request = $this->newRequest("PUT", "/external/{agencyid}/patrons/{patronid}/v3");
     $request->addParameter("path", "agencyid", $agencyid);
     $request->addParameter("path", "patronid", $patronid);
@@ -181,8 +185,8 @@ class ExternalPatronApi extends SwaggerApi
 
     $request->defineResponse(200, "", '\\FBS\\Model\\AuthenticatedPatronV3');
     $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
-    $request->defineResponse("401", 'client unauthorized', NULL);
-    $request->defineResponse("404", 'patron not found', NULL);
+    $request->defineResponse("401", 'client unauthorized', null);
+    $request->defineResponse("404", 'patron not found', null);
 
     return $request->execute();
   }
@@ -195,14 +199,16 @@ class ExternalPatronApi extends SwaggerApi
    * @return array Returns an array of string representation of the language
    *  codes.
    */
-  public function getLanguages($agencyId) {
+  public function getLanguages($agencyId)
+  {
     $request = $this->newRequest('GET', "/external/{agencyid}/patrons/languages/v1");
     $request->addParameter("path", "agencyid", $agencyId);
+
     $request->defineResponse(200, "", array('\\FBS\\Model\\Languages'));
     $request->defineResponse("400", 'bad request', '\\FBS\\Model\\RestException');
-    $request->defineResponse("401", 'client unauthorized', NULL);
+    $request->defineResponse("401", 'client unauthorized', null);
 
     return $request->execute();
   }
-}
 
+}
