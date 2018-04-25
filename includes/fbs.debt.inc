@@ -41,9 +41,9 @@ function fbs_debt_raw_list(stdClass $account) {
  */
 function fbs_debt_list($account) {
   $result = array();
-  $debt_ids = array();
-
   $fbs_debts_result = fbs_debt_raw_list($account);
+
+  $debt_ids = array();
   foreach ($fbs_debts_result as $fee) {
     // The entity is only fetched in this case.
     if (!empty($fee->materials) && count($fee->materials) == 1) {
@@ -51,7 +51,7 @@ function fbs_debt_list($account) {
       $debt_ids[$material->recordId] = $material->recordId;
     }
   }
-  $debt_ids = ding_provider_build_entity_id($debt_ids);
+  $debt_ids = ding_provider_lookup_entity_id($debt_ids);
 
   foreach ($fbs_debts_result as $fee) {
     $id = $fee->feeId;
@@ -92,6 +92,7 @@ function fbs_debt_list($account) {
     }
 
     $result[$id] = new DingProviderDebt($id, $data);
+
   }
 
   return $result;

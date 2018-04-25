@@ -12,13 +12,6 @@ class Availability
     public $recordId = null;
 
     /**
-     * @var integer Total number of current active reservations of the Bibliographic
-     * record
-     * @required
-     */
-    public $reservations = null;
-
-    /**
      * @var boolean True if materials can be reserved
      * @required
      */

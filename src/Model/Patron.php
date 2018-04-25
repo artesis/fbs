@@ -27,12 +27,6 @@ class Patron
     public $preferredPickupBranch = null;
 
     /**
-     * @var string Language in which the patron prefers the communication with
-     *   the library to take place.
-     */
-    public $preferredLanguage = null;
-
-    /**
      * @var Period If not set then the patron is not on hold
      */
     public $onHold = null;
@@ -45,7 +39,7 @@ class Patron
     public $patronId = null;
 
     /**
-     * @var boolean
+     * @var boolean 
      * @required
      */
     public $receiveEmail = null;
@@ -57,7 +51,7 @@ class Patron
     public $blockStatus = null;
 
     /**
-     * @var boolean
+     * @var boolean 
      * @required
      */
     public $receiveSms = null;
@@ -78,7 +72,7 @@ class Patron
     public $name = null;
 
     /**
-     * @var boolean
+     * @var boolean 
      * @required
      */
     public $receivePostalMail = null;
