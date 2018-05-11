@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Handles availability information from the library system.
@@ -15,22 +14,17 @@
  *   Availability info.
  */
 function fbs_availability_items($provider_ids) {
-  $avails = array();
-  $service = fbs_service();
-  if ($service) {
-    try {
-      $avails = $service->Catalog->getAvailability(
-        $service->agencyId,
-        $provider_ids
-      );
-    }
-    catch (Exception $e) {
-      watchdog_exception('fbs', $e);
-    }
+  $items = array();
+
+  try {
+    $items = fbs_service()->Catalog->getAvailability(fbs_service()->agencyId, $provider_ids, variable_get('fbs_holdings_branches_blacklist', array()));
+  }
+  catch (Exception $e) {
+    watchdog_exception('fbs', $e);
   }
 
   $result = array();
-  foreach ($avails as $item) {
+  foreach ($items as $item) {
     $result[$item->recordId] = array(
       'available' => $item->available,
       'reservable' => $item->reservable,
@@ -63,7 +57,6 @@ function fbs_availability_holdings($provider_ids) {
       watchdog_exception($e);
     }
   }
-
   $result = array();
   $tmp_issues = array();
   foreach ($holdings as $item) {
@@ -80,7 +73,6 @@ function fbs_availability_holdings($provider_ids) {
       'is_periodical' => FALSE,
       'reservation_count' => $item->reservations,
     );
-
     $placement_parts = array('branch', 'department', 'location', 'sublocation');
     foreach ($item->holdings as $item_holding) {
       $result_holding = array(
@@ -90,7 +82,6 @@ function fbs_availability_holdings($provider_ids) {
         'reference_count' => 0,
         'placement' => array(),
       );
-
       // Add in placement.
       foreach ($placement_parts as $part) {
         if (!empty($item_holding->{$part}->title)) {
@@ -106,7 +97,6 @@ function fbs_availability_holdings($provider_ids) {
           $result_holding['available_count']++;
           $result[$item->recordId]['available'] = TRUE;
         }
-
         if ($material->periodical) {
           // Add to issues.
           $key = (!empty($material->periodical->volumeYear) ?
@@ -134,10 +124,8 @@ function fbs_availability_holdings($provider_ids) {
           }
         }
       }
-
       $result[$item->recordId]['holdings'][] = $result_holding;
     }
-
     // Add issues in the right nesting.
     if (!empty($tmp_issues)) {
       $issues = array();
@@ -146,9 +134,7 @@ function fbs_availability_holdings($provider_ids) {
         if (!isset($issues[$issue['year']])) {
           $issues[$issue['year']] = array();
         }
-
         $year = &$issues[$issue['year']];
-
         if (!isset($year[$issue['vol']])) {
           $year[$issue['vol']] = array(
             'local_id' => $issue['local_id'],
@@ -163,16 +149,15 @@ function fbs_availability_holdings($provider_ids) {
         );
       }
       $result[$item->recordId]['issues'] = $issues;
+      // Reset issues so they do not get into wrong item.
+      $tmp_issues = [];
     }
-
     $result[$item->recordId]['html'] = _fbs_get_holdings(
       $result[$item->recordId],
       $result[$item->recordId]['is_periodical']
     );
   }
-
   return $result;
-
 }
 
 /**
@@ -211,7 +196,6 @@ function _fbs_get_holdings($res, $is_periodical = FALSE) {
  */
 function _fbs_set_holdings($res) {
   $reservation_count = (int) $res['reservation_count'];
-
   $result = _fbs_set_table_html($res['holdings'], $reservation_count);
   return $result;
 }
@@ -238,7 +222,6 @@ function _fbs_set_holdings_periodical($res) {
       }
     }
   }
-
   $result = _fbs_set_table_html($holdings, $reservation_count);
   return $result;
 }
@@ -261,30 +244,25 @@ function _fbs_set_table_html($h, $r_count) {
       drupal_html_class('availability_holdings_table'),
     ),
   );
-
   // Set table header.
   $variables['header'] = array(
     'placement' => t('Placement'),
     'copies' => t('Copies'),
     'home' => t('At home'),
   );
-
   // Set table rows.
   $variables['rows'] = _fbs_set_rows($h);
-
   // Set last row with reservation count.
   $row = array();
   $row['data']['Library'] = t('Reservations');
   $row['data']['Copies'] = array('data' => $r_count, 'colspan' => 4);
   $variables['rows'][] = $row;
-
   $holdings_table = array(
     '#theme' => 'table',
     '#header' => $variables['header'],
     '#rows' => $variables['rows'],
     '#attributes' => $variables['attributes'],
   );
-
   return drupal_render($holdings_table);
 }
 
@@ -299,32 +277,23 @@ function _fbs_set_table_html($h, $r_count) {
  */
 function _fbs_set_rows($h) {
   $rows = array();
-
   $copies_total = 0;
   $home_total = 0;
-
   foreach ($h as $key => $data) {
     $row = array();
-
     $row['placement'] = implode(' > ', $data['placement']);
-
     $row['copies'] = isset($data['total_count']) ? (int) $data['total_count'] : 0;
     $copies_total += $row['copies'];
-
     $row['home'] = isset($data['available_count']) ? (int) $data['available_count'] : 0;
     $home_total += $row['home'];
-
     $rows[] = $row;
   }
-
   // Sort library departments.
   $sort_order = variable_get('fbs_sort_departments', SORT_ASC);
   $rows = array_sort($rows, 'placement', $sort_order);
-
   if (count($rows) >= 1) {
     $rows = _clean_up_rows($rows);
   }
-
   // Adding row - totals.
   $row = array();
   $row['data']['Library'] = t('Total');
@@ -332,7 +301,6 @@ function _fbs_set_rows($h) {
   $row['data']['Home'] = $home_total;
   $row['class'] = array(drupal_html_class('availability_holdings_last_row'));
   $rows[] = $row;
-
   return $rows;
 }
 
@@ -348,7 +316,6 @@ function _fbs_set_rows($h) {
 function _clean_up_rows($_rows) {
   $rows = array();
   $placements = array();
-
   foreach ($_rows as $row) {
     $currkey = $row['placement'];
     if (!in_array($currkey, $placements)) {
@@ -379,7 +346,6 @@ function _get_placements_with_key($_rows, $currkey) {
       $rows[] = $key;
     }
   }
-
   return $rows;
 }
 
@@ -414,7 +380,6 @@ function _sum_placement($placementsarr) {
 function array_sort($array, $on, $order = SORT_ASC) {
   $new_array = array();
   $sortable_array = array();
-
   if (count($array) > 0) {
     foreach ($array as $k => $v) {
       if (is_array($v)) {
@@ -428,21 +393,17 @@ function array_sort($array, $on, $order = SORT_ASC) {
         $sortable_array[$k] = $v;
       }
     }
-
     switch ($order) {
       case SORT_ASC:
         asort($sortable_array);
         break;
-
       case SORT_DESC:
         arsort($sortable_array);
         break;
     }
-
     foreach ($sortable_array as $k => $v) {
       $new_array[$k] = $array[$k];
     }
   }
-
   return $new_array;
 }
