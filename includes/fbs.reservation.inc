@@ -178,6 +178,9 @@ function fbs_reservation_create($account, $record_id, $options) {
       case 'already_reserved':
         throw new DingProviderReservationExists();
 
+      case 'already_loaned':
+        throw new DingProviderReservationBorrowed();
+
       case 'patron_is_blocked':
       case 'loaning_profile_not_found':
       case 'patron_not_found':
@@ -195,7 +198,7 @@ function fbs_reservation_create($account, $record_id, $options) {
       default:
         watchdog('fbs', 'Unexpected state "@state" on failed reservaiton', array('@state' => $result->result), WATCHDOG_WARNING);
         throw new DingProviderUserException('Unknown error from library system while attempting to reserve.');
-    };
+    }
   }
 }
 
