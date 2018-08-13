@@ -767,33 +767,6 @@ function fbs_user_profile_init() {
 }
 
 /**
- * Implements hook_ting_pre_execute().
- */
-function fbs_ting_pre_execute($request) {
-  // We only want to modify searches.
-  if ($request instanceof TingClientSearchRequest) {
-    // Filter out blacklisted branches from search.
-    $branches_blacklist = array_filter(variable_get('fbs_branches_blacklist', array()));
-
-    if (!empty($branches_blacklist)) {
-      $query = $request->getQuery();
-      $allowed_branches = [];
-      foreach (fbs_branches() as $id => $branch) {
-        if (!in_array($id, $branches_blacklist)) {
-          $allowed_branches[] = _fbs_cql_quote_string($branch);
-        }
-      }
-      $query .= ' AND (holdingsitem.branch = (' . implode(' OR ',
-          $allowed_branches) . '))';
-      $request->setQuery($query);
-
-    }
-    // Since FBS is using data-well 3.5 we need to filter local holdings.
-    $request->setFilterLocalHoldings(TRUE);
-  }
-}
-
-/**
  * Quote string for use in CQL.
  *
  * Adds " around the string and escapes inline ".
