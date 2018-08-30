@@ -102,7 +102,7 @@ function fbs_reservation_list($account, $requested_type = NULL) {
 
     // Handle inter library loans.
     if (!empty($reservation->ilBibliographicRecord)) {
-      $ding_reservation['display_name'] = $reservation->ilBibliographicRecord->title;
+      $ding_reservation['display_name'] = $ding_reservation['title'] = $reservation->ilBibliographicRecord->title;
     }
 
     $result[$type][$ding_reservation['id']] = new DingProviderReservation($ding_reservation['id'], $ding_reservation);
@@ -178,6 +178,9 @@ function fbs_reservation_create($account, $record_id, $options) {
       case 'already_reserved':
         throw new DingProviderReservationExists();
 
+      case 'already_loaned':
+        throw new DingProviderReservationBorrowed();
+
       case 'patron_is_blocked':
       case 'loaning_profile_not_found':
       case 'patron_not_found':
@@ -195,7 +198,7 @@ function fbs_reservation_create($account, $record_id, $options) {
       default:
         watchdog('fbs', 'Unexpected state "@state" on failed reservaiton', array('@state' => $result->result), WATCHDOG_WARNING);
         throw new DingProviderUserException('Unknown error from library system while attempting to reserve.');
-    };
+    }
   }
 }
 
