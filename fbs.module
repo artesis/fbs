@@ -806,3 +806,21 @@ function fbs_preprocess_panels_pane(&$variables) {
     $variables['title'] = t('Edit user profile');
   }
 }
+
+/**
+ * Replace entity for the reservation in the case object in not in Ting anymore.
+ *
+ * @param \DingEntityBase $ding_entity
+ *   The lms item.
+ *
+ * @return \TingEntity
+ *   Pseudo-object.
+ */
+function fbs_replace_entity(DingEntityBase $ding_entity) {
+  $pseudo_ting_object = new TingEntity();
+
+  $pseudo_ting_object->setDingEntityId($ding_entity->ding_entity_id);
+  $pseudo_ting_object->setTitle($ding_entity->title);
+
+  return $pseudo_ting_object;
+}
