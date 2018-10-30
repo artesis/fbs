@@ -48,7 +48,7 @@ function fbs_loan_list($account) {
   foreach ($fbs_loans_result as $loan) {
     $loan_ids[] = $loan->loanDetails->recordId;
   }
-  $loan_ids = ding_provider_lookup_entity_id($loan_ids);
+  $loan_ids = ding_provider_build_entity_id($loan_ids);
 
   $result = array();
   foreach ($fbs_loans_result as $loan) {

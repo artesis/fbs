@@ -52,18 +52,12 @@ function fbs_reservation_list($account, $requested_type = NULL) {
 
   $ids = array();
   foreach ($res as $reservation) {
-    if (empty($reservation->recordId)) {
-      continue;
-    }
 
     $ids[$reservation->recordId] = $reservation->recordId;
   }
   $ids = ding_provider_build_entity_id($ids);
 
   foreach ($res as $reservation) {
-    if (empty($reservation->recordId)) {
-      continue;
-    }
 
     $type = $reservation->state == 'readyForPickup' ? DING_RESERVATION_READY : DING_RESERVATION_NOT_READY;
     $type = $reservation->state == 'interLibraryReservation' ? DING_RESERVATION_INTERLIBRARY_LOANS : $type;
