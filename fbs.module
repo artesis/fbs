@@ -817,10 +817,14 @@ function fbs_preprocess_panels_pane(&$variables) {
  *   Pseudo-object.
  */
 function fbs_replace_entity(DingEntityBase $ding_entity) {
-  $pseudo_ting_object = new TingEntity();
+  // Just prepare an empty object.
+  $pseudo_ting_object = ting_object_load('');
 
-  $pseudo_ting_object->setDingEntityId($ding_entity->ding_entity_id);
   $pseudo_ting_object->setTitle($ding_entity->title);
+  $pseudo_ting_object->setDingEntityId($ding_entity->ding_entity_id);
+  $pseudo_ting_object->setType($ding_entity->getType());
+  $pseudo_ting_object->setCreators([$ding_entity->getCreator()]);
+  $pseudo_ting_object->ding_entity_type = 'ding_entity';
 
   return $pseudo_ting_object;
 }
