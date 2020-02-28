@@ -61,7 +61,7 @@ function fbs_reservation_list($account, $requested_type = NULL) {
     $type = $reservation->state == 'interLibraryReservation' ? DING_RESERVATION_INTERLIBRARY_LOANS : $type;
 
     $ding_reservation = array(
-      'ding_entity_id' => $ids[$reservation->recordId],
+      'ding_entity_id' => !empty($reservation->recordId) ? $ids[$reservation->recordId] : NULL,
       'id' => $reservation->reservationId,
       'pickup_branch_id' => $reservation->pickupBranch,
       'created' => $reservation->dateOfReservation,

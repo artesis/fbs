@@ -53,7 +53,7 @@ function fbs_loan_list($account) {
   $result = array();
   foreach ($fbs_loans_result as $loan) {
     $loan_data = array(
-      'ding_entity_id' => $loan_ids[$loan->loanDetails->recordId],
+      'ding_entity_id' => !empty($loan->loanDetails->recordId) ? $loan_ids[$loan->loanDetails->recordId] : NULL,
       'loan_date' => $loan->loanDetails->loanDate,
       'expiry' => $loan->loanDetails->dueDate,
       'renewable' => $loan->isRenewable,
