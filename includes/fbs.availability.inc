@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Handles availability information from the library system.
@@ -54,7 +55,7 @@ function fbs_availability_holdings($provider_ids) {
       );
     }
     catch (Exception $e) {
-      watchdog_exception($e);
+      watchdog_exception('fbs', $e);
     }
   }
   $result = array();
@@ -176,9 +177,8 @@ function _fbs_get_holdings($res, $is_periodical = FALSE) {
     if ($is_periodical) {
       return _fbs_set_holdings_periodical($res);
     }
-    else {
-      return _fbs_set_holdings($res);
-    }
+
+    return _fbs_set_holdings($res);
   }
   else {
     return FALSE;
@@ -196,8 +196,7 @@ function _fbs_get_holdings($res, $is_periodical = FALSE) {
  */
 function _fbs_set_holdings($res) {
   $reservation_count = (int) $res['reservation_count'];
-  $result = _fbs_set_table_html($res['holdings'], $reservation_count);
-  return $result;
+  return _fbs_set_table_html($res['holdings'], $reservation_count);
 }
 
 /**
@@ -209,21 +208,18 @@ function _fbs_set_holdings($res) {
  * @return string
  *   Processed set of data.
  */
-function _fbs_set_holdings_periodical($res) {
-  $holdings = array();
+function _fbs_set_holdings_periodical($records) {
+  $holdings = [];
   $reservation_count = 0;
-  foreach ($res as $id => $records) {
-    $reservation_count += (int) $records['reservation_count'];
-    if (isset($records['holdings'])) {
-      foreach ($records['holdings'] as $holding => $issue_year) {
-        foreach ($issue_year as $key) {
-          $holdings[] = $key[0];
-        }
+  $reservation_count += (int) $records['reservation_count'];
+  if (isset($records['holdings'])) {
+    foreach ($records['holdings'] as $holding => $issue_year) {
+      foreach ($issue_year as $key) {
+        $holdings[] = $key[0];
       }
     }
   }
-  $result = _fbs_set_table_html($holdings, $reservation_count);
-  return $result;
+  return _fbs_set_table_html($holdings, $reservation_count);
 }
 
 /**
@@ -276,11 +272,11 @@ function _fbs_set_table_html($h, $r_count) {
  *   Table body.
  */
 function _fbs_set_rows($h) {
-  $rows = array();
+  $rows = [];
   $copies_total = 0;
   $home_total = 0;
   foreach ($h as $key => $data) {
-    $row = array();
+    $row = [];
     $row['placement'] = implode(' > ', $data['placement']);
     $row['copies'] = isset($data['total_count']) ? (int) $data['total_count'] : 0;
     $copies_total += $row['copies'];
@@ -295,11 +291,11 @@ function _fbs_set_rows($h) {
     $rows = _clean_up_rows($rows);
   }
   // Adding row - totals.
-  $row = array();
+  $row = [];
   $row['data']['Library'] = t('Total');
   $row['data']['Copies'] = $copies_total;
   $row['data']['Home'] = $home_total;
-  $row['class'] = array(drupal_html_class('availability_holdings_last_row'));
+  $row['class'] = [drupal_html_class('availability_holdings_last_row')];
   $rows[] = $row;
   return $rows;
 }
@@ -321,8 +317,7 @@ function _clean_up_rows($_rows) {
     if (!in_array($currkey, $placements)) {
       $placements[] = $currkey;
       $placementsarr = _get_placements_with_key($_rows, $currkey);
-      $this_row = _sum_placement($placementsarr);
-      $rows[] = $this_row;
+      $rows[] = _sum_placement($placementsarr);
     }
   }
   return $rows;
@@ -360,7 +355,8 @@ function _get_placements_with_key($_rows, $currkey) {
  */
 function _sum_placement($placementsarr) {
   $row = $placementsarr[0];
-  for ($i = 1; $i < count($placementsarr); $i++) {
+  $placements_count = count($placementsarr);
+  for ($i = 1; $i < $placements_count; $i++) {
     $next_row = $placementsarr[$i];
     $row['copies'] += $next_row['copies'];
     $row['home'] += $next_row['home'];
