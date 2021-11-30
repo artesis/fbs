@@ -153,10 +153,7 @@ function fbs_availability_holdings($provider_ids) {
       // Reset issues so they do not get into wrong item.
       $tmp_issues = [];
     }
-    $result[$item->recordId]['html'] = _fbs_get_holdings(
-      $result[$item->recordId],
-      $result[$item->recordId]['is_periodical']
-    );
+    $result[$item->recordId]['html'] = _fbs_get_holdings($result[$item->recordId]);
   }
   return $result;
 }
@@ -166,23 +163,15 @@ function fbs_availability_holdings($provider_ids) {
  *
  * @param array $res
  *   Item array.
- * @param bool $is_periodical
- *   Check for periodicals.
  *
  * @return bool|string
  *   Processed set of data.
  */
-function _fbs_get_holdings($res, $is_periodical = FALSE) {
+function _fbs_get_holdings($res) {
   if (isset($res)) {
-    if ($is_periodical) {
-      return _fbs_set_holdings_periodical($res);
-    }
-
     return _fbs_set_holdings($res);
   }
-  else {
-    return FALSE;
-  }
+  return FALSE;
 }
 
 /**
@@ -197,29 +186,6 @@ function _fbs_get_holdings($res, $is_periodical = FALSE) {
 function _fbs_set_holdings($res) {
   $reservation_count = (int) $res['reservation_count'];
   return _fbs_set_table_html($res['holdings'], $reservation_count);
-}
-
-/**
- * Set holdings if material is periodical only.
- *
- * @param array $res
- *   Item array.
- *
- * @return string
- *   Processed set of data.
- */
-function _fbs_set_holdings_periodical($records) {
-  $holdings = [];
-  $reservation_count = 0;
-  $reservation_count += (int) $records['reservation_count'];
-  if (isset($records['holdings'])) {
-    foreach ($records['holdings'] as $holding => $issue_year) {
-      foreach ($issue_year as $key) {
-        $holdings[] = $key[0];
-      }
-    }
-  }
-  return _fbs_set_table_html($holdings, $reservation_count);
 }
 
 /**
