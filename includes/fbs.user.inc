@@ -103,9 +103,22 @@ function fbs_user_authenticate($name, $pincode) {
  * to in the absence of this function.
  */
 function fbs_user_get_name($account) {
-  if ($patron_info = fbs_get_patron_info($account)
-      && isset($patron_info['name'])) {
-    return $patron_info['name'];
+  if (($patron_info = fbs_get_patron_info($account))
+      && isset($patron_info['library_card_number'])) {
+    return $patron_info['library_card_number'];
+  }
+
+  return NULL;
+}
+
+/**
+ * Get the provider id.
+ */
+function fbs_user_get_provider_id($account) {
+  $patron_info = fbs_get_patron_info($account);
+
+  if (isset($patron_info['patronId'])) {
+    return $patron_info['patronId'];
   }
 
   return NULL;
